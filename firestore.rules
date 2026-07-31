@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function hasUserDoc() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isApproved() {
+      return signedIn() && hasUserDoc()
+        && userData(request.auth.uid).status == 'approved';
+    }
+
+    function isAdmin() {
+      return signedIn() && hasUserDoc()
+        && userData(request.auth.uid).role == 'admin';
+    }
+
+    match /users/{uid} {
+      // 본인 문서는 항상 읽기 가능, 승인된 구성원은 명단 조회 가능(담당자 지정 등)
+      allow read: if signedIn() && (request.auth.uid == uid || isApproved() || isAdmin());
+      // 가입 시 본인 문서 생성: 반드시 member / pending 으로만 시작하고,
+      // email은 Auth 토큰의 이메일과 일치해야 한다(승인 화면 스푸핑 방지)
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == 'member'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'status', 'createdAt']);
+      // 본인은 name만 수정 가능(role/status/email 불변), 관리자만 승인·역할 변경 가능
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']));
+      allow delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isApproved()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
+    }
+
+    match /projects/{projectId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      // 작성자/관리자만 수정 가능, createdBy는 변경 불가(소유권 탈취 방지)
+      allow update: if isApproved()
+        && (resource.data.createdBy == request.auth.uid || isAdmin())
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if isApproved()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isApproved();
+    }
+  }
+}
