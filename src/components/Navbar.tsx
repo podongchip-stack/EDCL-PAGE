@@ -11,9 +11,12 @@ const MEMBER_LINKS = [
   { href: "/", label: "대시보드" },
   { href: "/calendar", label: "일정표" },
   { href: "/projects", label: "프로젝트" },
+  { href: "/notes", label: "회의록" },
+  { href: "/journal-club", label: "저널클럽" },
   { href: "/resources", label: "자료실" },
   { href: "/bookings", label: "예약" },
   { href: "/publications", label: "논문" },
+  { href: "/news", label: "소식" },
 ];
 
 export default function Navbar() {
@@ -27,6 +30,7 @@ export default function Navbar() {
 
   // 로그인하지 않은 방문자(또는 승인 대기)에게 보이는 공개 페이지 링크
   const publicLinks = [
+    { href: "/news", label: lang === "en" ? "News" : "소식" },
     { href: "/members", label: lang === "en" ? "Members" : "구성원" },
     { href: "/publications", label: lang === "en" ? "Publications" : "논문" },
   ];

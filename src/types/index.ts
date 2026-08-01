@@ -117,8 +117,46 @@ export interface PublicProfile {
   name: string;
   position: string; // 예: 석사과정, 박사과정, 지도교수
   interests: string; // 연구 분야
+  isAlumni?: boolean; // 졸업생 여부 (구성원 페이지에서 별도 섹션)
   visible: boolean;
   updatedAt: Timestamp | null;
+}
+
+// Firestore: news/{newsId} — 공개 소식 (관리자 작성)
+export interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  date: string; // YYYY-MM-DD
+  link: string;
+  createdBy: string;
+  createdAt: Timestamp | null;
+}
+
+// Firestore: meetingNotes/{noteId} — 내부 회의록
+export interface MeetingNote {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  content: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Timestamp | null;
+}
+
+export type ReadingStatus = "queued" | "done";
+
+// Firestore: readings/{readingId} — 저널클럽 논문 리딩 큐
+export interface Reading {
+  id: string;
+  title: string;
+  link: string;
+  presenterName: string; // 발표자 (자유 입력)
+  scheduledDate: string; // 발표 예정일 YYYY-MM-DD (없으면 "")
+  status: ReadingStatus;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Timestamp | null;
 }
 
 // Firestore: siteContent/labInfo — 공개 랜딩 페이지 문구 (관리자 편집)
@@ -130,6 +168,11 @@ export interface LabInfo {
   researchEn?: string;
   topics?: string; // 연구 키워드 (쉼표로 구분 → 칩으로 표시)
   topicsEn?: string;
+  grantsText?: string; // 연구 과제 (한 줄에 하나)
+  advisorBio?: string; // 지도교수 약력 (구성원 페이지 상단)
+  advisorBioEn?: string;
+  joinUs?: string; // 모집 안내 (비우면 랜딩에 섹션 미표시)
+  joinUsEn?: string;
   professor: string;
   contact: string;
 }

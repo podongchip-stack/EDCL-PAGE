@@ -15,6 +15,11 @@ export default function LabInfoEditor() {
   const [researchEn, setResearchEn] = useState("");
   const [topics, setTopics] = useState("");
   const [topicsEn, setTopicsEn] = useState("");
+  const [grantsText, setGrantsText] = useState("");
+  const [advisorBio, setAdvisorBio] = useState("");
+  const [advisorBioEn, setAdvisorBioEn] = useState("");
+  const [joinUs, setJoinUs] = useState("");
+  const [joinUsEn, setJoinUsEn] = useState("");
   const [professor, setProfessor] = useState("");
   const [contact, setContact] = useState("");
   const [saving, setSaving] = useState(false);
@@ -36,6 +41,17 @@ export default function LabInfoEditor() {
           );
           setTopics(typeof data.topics === "string" ? data.topics : "");
           setTopicsEn(typeof data.topicsEn === "string" ? data.topicsEn : "");
+          setGrantsText(
+            typeof data.grantsText === "string" ? data.grantsText : ""
+          );
+          setAdvisorBio(
+            typeof data.advisorBio === "string" ? data.advisorBio : ""
+          );
+          setAdvisorBioEn(
+            typeof data.advisorBioEn === "string" ? data.advisorBioEn : ""
+          );
+          setJoinUs(typeof data.joinUs === "string" ? data.joinUs : "");
+          setJoinUsEn(typeof data.joinUsEn === "string" ? data.joinUsEn : "");
           setProfessor(
             typeof data.professor === "string" ? data.professor : ""
           );
@@ -59,6 +75,11 @@ export default function LabInfoEditor() {
         researchEn: researchEn.trim(),
         topics: topics.trim(),
         topicsEn: topicsEn.trim(),
+        grantsText: grantsText.trim(),
+        advisorBio: advisorBio.trim(),
+        advisorBioEn: advisorBioEn.trim(),
+        joinUs: joinUs.trim(),
+        joinUsEn: joinUsEn.trim(),
         professor: professor.trim(),
         contact: contact.trim(),
       });
@@ -181,6 +202,95 @@ export default function LabInfoEditor() {
               onChange={(e) => setTopicsEn(e.target.value)}
               disabled={saving}
               placeholder="Comma-separated (optional)"
+              className={inputClass}
+            />
+          </div>
+        </div>
+        <div>
+          <label
+            htmlFor="lab-grants"
+            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            연구 과제 (한 줄에 하나)
+          </label>
+          <textarea
+            id="lab-grants"
+            value={grantsText}
+            onChange={(e) => setGrantsText(e.target.value)}
+            rows={3}
+            disabled={saving}
+            placeholder={"예: BMS 고장 진단 연구 — 한국연구재단 (2025~2027)"}
+            className={inputClass}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="lab-advisor-bio"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              지도교수 약력
+            </label>
+            <textarea
+              id="lab-advisor-bio"
+              value={advisorBio}
+              onChange={(e) => setAdvisorBio(e.target.value)}
+              rows={4}
+              disabled={saving}
+              placeholder="학력·경력 등 (구성원 페이지 상단에 표시, 선택)"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="lab-advisor-bio-en"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              지도교수 약력 (영문)
+            </label>
+            <textarea
+              id="lab-advisor-bio-en"
+              value={advisorBioEn}
+              onChange={(e) => setAdvisorBioEn(e.target.value)}
+              rows={4}
+              disabled={saving}
+              placeholder="English bio (선택)"
+              className={inputClass}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="lab-joinus"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              모집 안내 (Join Us)
+            </label>
+            <textarea
+              id="lab-joinus"
+              value={joinUs}
+              onChange={(e) => setJoinUs(e.target.value)}
+              rows={4}
+              disabled={saving}
+              placeholder="대학원생·학부연구생 모집 안내. 입력하면 공개 홈에 섹션이 표시됩니다."
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="lab-joinus-en"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              모집 안내 (영문)
+            </label>
+            <textarea
+              id="lab-joinus-en"
+              value={joinUsEn}
+              onChange={(e) => setJoinUsEn(e.target.value)}
+              rows={4}
+              disabled={saving}
+              placeholder="English recruiting note (선택)"
               className={inputClass}
             />
           </div>

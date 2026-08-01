@@ -105,6 +105,7 @@ function SettingsContent() {
   const [profileVisible, setProfileVisible] = useState(false);
   const [position, setPosition] = useState("");
   const [interests, setInterests] = useState("");
+  const [isAlumni, setIsAlumni] = useState(false);
   const [savingPublic, setSavingPublic] = useState(false);
   const [publicMsg, setPublicMsg] = useState<{
     type: "success" | "error";
@@ -122,6 +123,7 @@ function SettingsContent() {
           setInterests(
             typeof data.interests === "string" ? data.interests : ""
           );
+          setIsAlumni(data.isAlumni === true);
         }
       })
       .catch(() => {
@@ -138,6 +140,7 @@ function SettingsContent() {
         name: profile.name,
         position: position.trim(),
         interests: interests.trim(),
+        isAlumni,
         visible: profileVisible,
         updatedAt: serverTimestamp(),
       });
@@ -349,16 +352,28 @@ function SettingsContent() {
           </Link>
         </div>
         <div className="space-y-4 p-5">
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input
-              type="checkbox"
-              checked={profileVisible}
-              onChange={(e) => setProfileVisible(e.target.checked)}
-              disabled={savingPublic}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            구성원 페이지에 내 프로필 공개
-          </label>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={profileVisible}
+                onChange={(e) => setProfileVisible(e.target.checked)}
+                disabled={savingPublic}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              구성원 페이지에 내 프로필 공개
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={isAlumni}
+                onChange={(e) => setIsAlumni(e.target.checked)}
+                disabled={savingPublic}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              졸업생 (졸업생 섹션에 표시)
+            </label>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label

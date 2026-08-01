@@ -356,4 +356,122 @@ describe("공개 프로필 쓰기 보호", () => {
       deleteDoc(doc(db(ADMIN_UID), "publicProfiles", MEMBER_UID))
     );
   });
+
+  it("졸업생 표시(isAlumni) 필드를 저장할 수 있다", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(MEMBER_UID), "publicProfiles", MEMBER_UID), {
+        name: "구성원",
+        position: "석사 졸업",
+        interests: "",
+        isAlumni: true,
+        visible: true,
+        updatedAt: new Date(),
+      })
+    );
+  });
+});
+
+describe("소식·회의록·저널클럽", () => {
+  it("소식은 비로그인도 읽을 수 있지만 구성원은 쓸 수 없다 (관리자 전용)", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "news", "n1"), {
+        title: "소식",
+        content: "",
+        date: "2026-08-01",
+        link: "",
+        createdBy: ADMIN_UID,
+        createdAt: new Date(),
+      });
+    });
+    await assertSucceeds(getDoc(doc(db(null), "news", "n1")));
+    await assertFails(
+      setDoc(doc(db(MEMBER_UID), "news", "n2"), {
+        title: "무단 소식",
+        content: "",
+        date: "2026-08-01",
+        link: "",
+        createdBy: MEMBER_UID,
+        createdAt: new Date(),
+      })
+    );
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN_UID), "news", "n3"), {
+        title: "관리자 소식",
+        content: "",
+        date: "2026-08-01",
+        link: "",
+        createdBy: ADMIN_UID,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("회의록은 승인 대기 계정이 읽을 수 없고, 구성원은 본인 명의로 쓸 수 있다", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(MEMBER_UID), "meetingNotes", "m1"), {
+        title: "랩미팅",
+        date: "2026-08-01",
+        content: "",
+        createdBy: MEMBER_UID,
+        createdByName: "구성원",
+        createdAt: new Date(),
+      })
+    );
+    await assertFails(getDoc(doc(db(PENDING_UID), "meetingNotes", "m1")));
+    await assertFails(getDoc(doc(db(null), "meetingNotes", "m1")));
+  });
+
+  it("저널클럽 update로 createdBy를 바꿔 소유권을 탈취할 수 없다", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "readings", "r-owned"), {
+        title: "타인 논문",
+        link: "",
+        presenterName: "",
+        scheduledDate: "",
+        status: "queued",
+        createdBy: ADMIN_UID,
+        createdByName: "관리자",
+        createdAt: new Date(),
+      });
+    });
+    // 상태 토글은 허용
+    await assertSucceeds(
+      updateDoc(doc(db(MEMBER_UID), "readings", "r-owned"), {
+        status: "done",
+      })
+    );
+    // createdBy 변경(소유권 탈취)은 거부
+    await assertFails(
+      updateDoc(doc(db(MEMBER_UID), "readings", "r-owned"), {
+        createdBy: MEMBER_UID,
+      })
+    );
+  });
+
+  it("저널클럽 논문은 createdBy를 위조해 만들 수 없다", async () => {
+    await assertFails(
+      setDoc(doc(db(MEMBER_UID), "readings", "r1"), {
+        title: "논문",
+        link: "",
+        presenterName: "",
+        scheduledDate: "",
+        status: "queued",
+        createdBy: ADMIN_UID,
+        createdByName: "관리자",
+        createdAt: new Date(),
+      })
+    );
+    await assertSucceeds(
+      setDoc(doc(db(MEMBER_UID), "readings", "r2"), {
+        title: "논문",
+        link: "",
+        presenterName: "",
+        scheduledDate: "",
+        status: "queued",
+        createdBy: MEMBER_UID,
+        createdByName: "구성원",
+        createdAt: new Date(),
+      })
+    );
+  });
 });

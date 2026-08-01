@@ -21,11 +21,12 @@ import { LabEvent } from "@/types";
 import {
   EVENT_CATEGORY_ORDER,
   EVENT_CATEGORY_STYLES,
+  eventCategory,
   eventCategoryStyle,
 } from "@/lib/eventCategories";
 import { downloadIcs, eventsToIcs } from "@/lib/ical";
 import { weekStart } from "@/lib/rotations";
-import { formatDate, isSameDay, tsToDate } from "@/lib/dates";
+import { daysUntil, formatDate, isSameDay, tsToDate } from "@/lib/dates";
 
 type ModalState =
   | { type: "create"; date: Date }
@@ -369,6 +370,14 @@ function CalendarContent() {
                           {isSameDay(start, end)
                             ? formatDate(start)
                             : `${formatDate(start)} ~ ${formatDate(end)}`}
+                          {eventCategory(ev) === "deadline" &&
+                            daysUntil(start) >= 0 && (
+                              <span className="ml-auto shrink-0 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                                {daysUntil(start) === 0
+                                  ? "D-DAY"
+                                  : `D-${daysUntil(start)}`}
+                              </span>
+                            )}
                         </p>
                         <p className="mt-0.5 truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                           {ev.title}

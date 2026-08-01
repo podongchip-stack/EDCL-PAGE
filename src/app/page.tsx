@@ -17,8 +17,8 @@ import PublicHome from "@/components/PublicHome";
 import RotationCard from "@/components/RotationCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { LabEvent, Project, Task, TASK_STATUS_LABELS } from "@/types";
-import { eventCategoryStyle } from "@/lib/eventCategories";
-import { formatDate, isSameDay, WEEKDAY_LABELS } from "@/lib/dates";
+import { eventCategory, eventCategoryStyle } from "@/lib/eventCategories";
+import { daysUntil, formatDate, isSameDay, WEEKDAY_LABELS } from "@/lib/dates";
 
 function formatKoreanDate(d: Date): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${
@@ -287,10 +287,21 @@ function DashboardContent() {
                       <span className="truncate font-medium text-gray-900 dark:text-gray-100">
                         {ev.title}
                       </span>
-                      {isSameDay(ev.start.toDate(), now) && (
-                        <span className="shrink-0 rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white">
-                          오늘
-                        </span>
+                      {eventCategory(ev) === "deadline" ? (
+                        (() => {
+                          const dd = daysUntil(ev.start.toDate());
+                          return dd >= 0 ? (
+                            <span className="shrink-0 rounded-full bg-red-600 px-2 py-0.5 text-xs font-medium text-white">
+                              {dd === 0 ? "D-DAY" : `D-${dd}`}
+                            </span>
+                          ) : null;
+                        })()
+                      ) : (
+                        isSameDay(ev.start.toDate(), now) && (
+                          <span className="shrink-0 rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white">
+                            오늘
+                          </span>
+                        )
                       )}
                     </div>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-gray-500 dark:text-gray-400">

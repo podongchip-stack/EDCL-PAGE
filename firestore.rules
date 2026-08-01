@@ -97,7 +97,7 @@ service cloud.firestore {
         || (signedIn() && (request.auth.uid == uid || isAdmin()));
       allow create, update: if ((isApproved() && request.auth.uid == uid) || isAdmin())
         && request.resource.data.keys().hasOnly(
-          ['name', 'position', 'interests', 'visible', 'updatedAt']
+          ['name', 'position', 'interests', 'isAlumni', 'visible', 'updatedAt']
         );
       allow delete: if (isApproved() && request.auth.uid == uid) || isAdmin();
     }
@@ -129,6 +129,31 @@ service cloud.firestore {
     match /rotations/{rotationId} {
       allow read: if isApproved();
       allow create, update, delete: if isAdmin();
+    }
+
+    // 공개 소식: 누구나 읽기, 관리자만 작성
+    match /news/{newsId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 내부 회의록
+    match /meetingNotes/{noteId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isApproved()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
+    }
+
+    // 저널클럽 논문 리딩 큐 (상태 변경은 구성원 누구나 — 작업과 동일한 협업 모델)
+    // 단, createdBy는 변경 불가 — 소유권을 바꿔 작성자 전용 삭제 제한을 우회하지 못하게
+    match /readings/{readingId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isApproved()
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if isApproved()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
     }
   }
 }

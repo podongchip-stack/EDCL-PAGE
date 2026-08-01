@@ -30,6 +30,14 @@ export function timeToMin(v: string): number | null {
   return h * 60 + mm;
 }
 
+// 오늘부터 해당 날짜까지 남은 일수 (오늘이면 0, 지났으면 음수)
+export function daysUntil(d: Date): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
+
 export function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&

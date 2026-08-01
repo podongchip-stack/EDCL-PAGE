@@ -6,8 +6,10 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
   LabEvent,
+  MeetingNote,
   Notice,
   Project,
+  Reading,
   ResourceLink,
   Task,
 } from "@/types";
@@ -23,6 +25,8 @@ interface SearchData {
   tasks: Task[];
   notices: Notice[];
   resources: ResourceLink[];
+  meetingNotes: MeetingNote[];
+  readings: Reading[];
 }
 
 const MAX_PER_GROUP = 5;
@@ -46,8 +50,10 @@ export default function SearchModal({ onClose }: SearchModalProps) {
       getDocs(collection(db, "tasks")),
       getDocs(collection(db, "notices")),
       getDocs(collection(db, "resources")),
+      getDocs(collection(db, "meetingNotes")),
+      getDocs(collection(db, "readings")),
     ])
-      .then(([ev, pr, ta, no, re]) => {
+      .then(([ev, pr, ta, no, re, mn, rd]) => {
         if (cancelled) return;
         const projects = pr.docs.map(
           (d) => ({ id: d.id, ...d.data() }) as Project
@@ -64,6 +70,12 @@ export default function SearchModal({ onClose }: SearchModalProps) {
           notices: no.docs.map((d) => ({ id: d.id, ...d.data() }) as Notice),
           resources: re.docs.map(
             (d) => ({ id: d.id, ...d.data() }) as ResourceLink
+          ),
+          meetingNotes: mn.docs.map(
+            (d) => ({ id: d.id, ...d.data() }) as MeetingNote
+          ),
+          readings: rd.docs.map(
+            (d) => ({ id: d.id, ...d.data() }) as Reading
           ),
         });
       })
@@ -159,6 +171,32 @@ export default function SearchModal({ onClose }: SearchModalProps) {
                 title: r.title,
                 detail: r.createdByName,
                 onSelect: () => go("/resources"),
+              })),
+          },
+          {
+            key: "meetingNotes",
+            label: "회의록",
+            items: data.meetingNotes
+              .filter((n) => matches(q, n.title, n.content))
+              .slice(0, MAX_PER_GROUP)
+              .map((n) => ({
+                id: n.id,
+                title: n.title,
+                detail: n.date,
+                onSelect: () => go(`/notes?note=${n.id}`),
+              })),
+          },
+          {
+            key: "readings",
+            label: "저널클럽",
+            items: data.readings
+              .filter((r) => matches(q, r.title, r.presenterName))
+              .slice(0, MAX_PER_GROUP)
+              .map((r) => ({
+                id: r.id,
+                title: r.title,
+                detail: r.presenterName || "발표자 미정",
+                onSelect: () => go("/journal-club"),
               })),
           },
         ].filter((g) => g.items.length > 0)

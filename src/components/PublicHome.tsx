@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { LabInfo, Publication } from "@/types";
+import { LabInfo, NewsItem, Publication } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { publicStrings } from "@/lib/publicStrings";
 
@@ -38,9 +38,27 @@ export default function PublicHome() {
     return unsubscribe;
   }, []);
 
+  const [news, setNews] = useState<NewsItem[]>([]);
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "news"), (snap) => {
+      setNews(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as NewsItem));
+    });
+    return unsubscribe;
+  }, []);
+
   const recentPubs = [...pubs]
     .sort((a, b) => (a.year === b.year ? pubMillis(b) - pubMillis(a) : b.year - a.year))
     .slice(0, 3);
+  const recentNews = [...news]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, 3);
+
+  const grants = (info?.grantsText ?? "")
+    .split("\n")
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
+  const joinUs =
+    (lang === "en" ? info?.joinUsEn || info?.joinUs : info?.joinUs) ?? "";
 
   // EN 모드에서 영문 필드가 있으면 사용하고, 없으면 국문 → 기본 문구 순으로 폴백
   const intro =
@@ -104,6 +122,52 @@ export default function PublicHome() {
           <p className="mt-4 whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
             {research}
           </p>
+          {grants.length > 0 && (
+            <div className="mt-6 border-t border-gray-100 pt-4 dark:border-gray-800">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {t.grantsTitle}
+              </h3>
+              <ul className="mt-2 space-y-1.5">
+                {grants.map((g) => (
+                  <li
+                    key={g}
+                    className="flex gap-2 text-sm text-gray-600 dark:text-gray-400"
+                  >
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+                    <span className="break-words">{g}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
+      {recentNews.length > 0 && (
+        <section className="mx-auto mt-8 max-w-3xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {t.recentNews}
+            </h2>
+            <Link
+              href="/news"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              {t.viewAllNews}
+            </Link>
+          </div>
+          <ul className="mt-4 space-y-3">
+            {recentNews.map((n) => (
+              <li key={n.id} className="flex gap-3">
+                <span className="w-24 shrink-0 text-xs text-gray-400 dark:text-gray-500">
+                  {n.date}
+                </span>
+                <span className="min-w-0 break-words text-sm text-gray-800 dark:text-gray-200">
+                  {n.title}
+                </span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -144,6 +208,17 @@ export default function PublicHome() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {joinUs && (
+        <section className="mx-auto mt-8 max-w-3xl rounded-lg border border-blue-200 bg-blue-50/50 p-8 dark:border-blue-900 dark:bg-blue-950/20">
+          <h2 className="text-xl font-bold text-blue-800 dark:text-blue-300">
+            {t.joinUsTitle}
+          </h2>
+          <p className="mt-3 whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
+            {joinUs}
+          </p>
         </section>
       )}
 
