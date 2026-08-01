@@ -121,10 +121,15 @@ export interface PublicProfile {
   updatedAt: Timestamp | null;
 }
 
-// Firestore: siteContent/labInfo — 공개 랜딩 페이지 소개 문구 (관리자 편집)
+// Firestore: siteContent/labInfo — 공개 랜딩 페이지 문구 (관리자 편집)
+// 비어 있는 필드는 코드에 정의된 기본 문구(publicStrings)로 대체 표시된다
 export interface LabInfo {
   intro: string;
   introEn?: string; // 영문 소개 (없으면 EN 모드에서도 국문 intro 표시)
+  research?: string; // 연구 소개 본문 (여러 문단)
+  researchEn?: string;
+  topics?: string; // 연구 키워드 (쉼표로 구분 → 칩으로 표시)
+  topicsEn?: string;
   professor: string;
   contact: string;
 }

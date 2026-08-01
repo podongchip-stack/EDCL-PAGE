@@ -4,11 +4,14 @@ import { Language } from "@/contexts/LanguageContext";
 const STRINGS = {
   ko: {
     home: {
-      introFallback: "연구실 소개가 준비 중입니다.",
+      introFallback:
+        "배터리 관리 시스템(BMS)을 연구하는 EDCL 연구실입니다.",
+      researchTitle: "연구 소개",
+      // 관리자가 소개를 입력하기 전까지 표시되는 기본 초안
+      researchFallback:
+        "EDCL 연구실은 배터리 관리 시스템(BMS, Battery Management System)을 연구합니다.\n\nBMS는 배터리의 전압·전류·온도를 실시간으로 관찰하고 충전 상태(SOC)와 건강 상태(SOH)를 추정해, 배터리를 안전하고 오래, 효율적으로 쓰도록 만드는 핵심 기술입니다. 전기차와 에너지 저장 장치(ESS)처럼 배터리가 중심이 되는 시스템의 성능과 안전은 BMS에 달려 있습니다.\n\n구체적인 연구 주제와 진행 중인 프로젝트는 논문 페이지와 함께 계속 업데이트됩니다.",
       professor: "지도교수",
       contact: "연락처",
-      membersTitle: "구성원",
-      membersDesc: "연구실 멤버를 소개합니다",
       pubsTitle: "논문",
       pubsDesc: "연구 성과와 출판물",
       loginTitle: "구성원 로그인",
@@ -86,11 +89,13 @@ const STRINGS = {
   },
   en: {
     home: {
-      introFallback: "Lab introduction coming soon.",
+      introFallback:
+        "EDCL is a research lab focused on Battery Management Systems (BMS).",
+      researchTitle: "Research",
+      researchFallback:
+        "EDCL studies Battery Management Systems (BMS).\n\nA BMS monitors a battery's voltage, current, and temperature in real time and estimates its state of charge (SOC) and state of health (SOH), keeping the battery safe, efficient, and long-lasting. The performance and safety of battery-powered systems — from electric vehicles to energy storage systems (ESS) — depend on the BMS.\n\nSpecific research topics and ongoing projects are updated along with our publications page.",
       professor: "Advisor",
       contact: "Contact",
-      membersTitle: "Members",
-      membersDesc: "Meet our lab members",
       pubsTitle: "Publications",
       pubsDesc: "Research outcomes",
       loginTitle: "Member Login",

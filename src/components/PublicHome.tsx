@@ -26,9 +26,19 @@ export default function PublicHome() {
     return unsubscribe;
   }, []);
 
-  // EN 모드에서 영문 소개가 있으면 사용하고, 없으면 국문으로 폴백
+  // EN 모드에서 영문 필드가 있으면 사용하고, 없으면 국문 → 기본 문구 순으로 폴백
   const intro =
-    lang === "en" ? info?.introEn || info?.intro : info?.intro;
+    (lang === "en" ? info?.introEn || info?.intro : info?.intro) ||
+    t.introFallback;
+  const research =
+    (lang === "en" ? info?.researchEn || info?.research : info?.research) ||
+    t.researchFallback;
+  const topicsRaw =
+    (lang === "en" ? info?.topicsEn || info?.topics : info?.topics) ?? "";
+  const topics = topicsRaw
+    .split(",")
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
@@ -42,8 +52,8 @@ export default function PublicHome() {
             <div className="mx-auto h-4 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
           </div>
         ) : (
-          <p className="mx-auto mt-6 max-w-2xl whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
-            {intro || t.introFallback}
+          <p className="mx-auto mt-6 max-w-2xl whitespace-pre-wrap break-words text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+            {intro}
           </p>
         )}
         {info?.professor && (
@@ -58,18 +68,30 @@ export default function PublicHome() {
         )}
       </section>
 
-      <section className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
-        <Link
-          href="/members"
-          className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-800 dark:hover:bg-blue-950/30"
-        >
-          <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            {t.membersTitle}
+      {loaded && (
+        <section className="mx-auto mt-12 max-w-3xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            {t.researchTitle}
+          </h2>
+          {topics.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {topics.map((topic) => (
+                <span
+                  key={topic}
+                  className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                >
+                  {topic}
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="mt-4 whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
+            {research}
           </p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t.membersDesc}
-          </p>
-        </Link>
+        </section>
+      )}
+
+      <section className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
         <Link
           href="/publications"
           className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-800 dark:hover:bg-blue-950/30"

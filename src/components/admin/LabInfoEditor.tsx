@@ -11,6 +11,10 @@ const inputClass =
 export default function LabInfoEditor() {
   const [intro, setIntro] = useState("");
   const [introEn, setIntroEn] = useState("");
+  const [research, setResearch] = useState("");
+  const [researchEn, setResearchEn] = useState("");
+  const [topics, setTopics] = useState("");
+  const [topicsEn, setTopicsEn] = useState("");
   const [professor, setProfessor] = useState("");
   const [contact, setContact] = useState("");
   const [saving, setSaving] = useState(false);
@@ -26,6 +30,12 @@ export default function LabInfoEditor() {
           const data = snap.data();
           setIntro(typeof data.intro === "string" ? data.intro : "");
           setIntroEn(typeof data.introEn === "string" ? data.introEn : "");
+          setResearch(typeof data.research === "string" ? data.research : "");
+          setResearchEn(
+            typeof data.researchEn === "string" ? data.researchEn : ""
+          );
+          setTopics(typeof data.topics === "string" ? data.topics : "");
+          setTopicsEn(typeof data.topicsEn === "string" ? data.topicsEn : "");
           setProfessor(
             typeof data.professor === "string" ? data.professor : ""
           );
@@ -45,6 +55,10 @@ export default function LabInfoEditor() {
       await setDoc(doc(db, "siteContent", "labInfo"), {
         intro: intro.trim(),
         introEn: introEn.trim(),
+        research: research.trim(),
+        researchEn: researchEn.trim(),
+        topics: topics.trim(),
+        topicsEn: topicsEn.trim(),
         professor: professor.trim(),
         contact: contact.trim(),
       });
@@ -63,7 +77,8 @@ export default function LabInfoEditor() {
     <section className="mt-8">
       <h2 className="text-lg font-semibold">연구실 소개 (공개 홈)</h2>
       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        로그인하지 않은 방문자에게 보이는 홈 화면의 소개 문구입니다.
+        로그인하지 않은 방문자에게 보이는 홈 화면의 문구입니다. 비워둔 항목은
+        기본 문구(BMS 소개 초안)가 대신 표시됩니다.
       </p>
       <div className="mt-3 space-y-3 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div>
@@ -99,6 +114,76 @@ export default function LabInfoEditor() {
             placeholder="English introduction (선택 — 비우면 EN 모드에서도 국문이 표시됩니다)"
             className={inputClass}
           />
+        </div>
+        <div>
+          <label
+            htmlFor="lab-research"
+            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            연구 소개 본문
+          </label>
+          <textarea
+            id="lab-research"
+            value={research}
+            onChange={(e) => setResearch(e.target.value)}
+            rows={6}
+            disabled={saving}
+            placeholder="BMS 연구에 대한 소개를 여러 문단으로 작성하세요. 비우면 기본 초안이 표시됩니다."
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="lab-research-en"
+            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            연구 소개 본문 (영문)
+          </label>
+          <textarea
+            id="lab-research-en"
+            value={researchEn}
+            onChange={(e) => setResearchEn(e.target.value)}
+            rows={6}
+            disabled={saving}
+            placeholder="English research description (선택)"
+            className={inputClass}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="lab-topics"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              연구 키워드
+            </label>
+            <input
+              id="lab-topics"
+              type="text"
+              value={topics}
+              onChange={(e) => setTopics(e.target.value)}
+              disabled={saving}
+              placeholder="쉼표로 구분 (예: SOC/SOH 추정, 셀 밸런싱)"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="lab-topics-en"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              연구 키워드 (영문)
+            </label>
+            <input
+              id="lab-topics-en"
+              type="text"
+              value={topicsEn}
+              onChange={(e) => setTopicsEn(e.target.value)}
+              disabled={saving}
+              placeholder="Comma-separated (optional)"
+              className={inputClass}
+            />
+          </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
