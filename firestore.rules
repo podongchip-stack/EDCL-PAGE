@@ -77,7 +77,12 @@ service cloud.firestore {
 
     match /resources/{resourceId} {
       allow read: if isApproved();
-      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      // 키 제한: 정의되지 않은 필드를 심은 위조 문서를 막는다 (파일 삭제 API 보조 방어)
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.keys().hasOnly(
+          ['title', 'url', 'description', 'fileName', 'fileSize',
+           'createdBy', 'createdByName', 'createdAt']
+        );
       allow update, delete: if isApproved()
         && (resource.data.createdBy == request.auth.uid || isAdmin());
     }

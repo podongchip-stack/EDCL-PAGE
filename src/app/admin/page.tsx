@@ -89,6 +89,34 @@ function AdminContent() {
     }
   };
 
+  // 서버에 서비스 계정 키가 등록된 경우 로그인 계정(Firebase Auth)까지 삭제한다.
+  // 결과에 따라 피드백 문장에 덧붙일 안내문을 돌려준다.
+  const deleteAuthAccount = async (targetUid: string): Promise<string> => {
+    const manualNote =
+      " 로그인 계정은 Firebase Console > Authentication에서 별도로 삭제하세요.";
+    try {
+      const idToken = await user?.getIdToken();
+      if (!idToken) return manualNote;
+      const res = await fetch("/api/admin/delete-member", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ uid: targetUid }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        configured?: boolean;
+        deleted?: boolean;
+      } | null;
+      if (res.ok && data?.deleted) return " 로그인 계정도 함께 삭제했습니다.";
+      if (data?.configured === false) return manualNote;
+      return ` 로그인 계정 삭제에는 실패했습니다.${manualNote}`;
+    } catch {
+      return ` 로그인 계정 삭제에는 실패했습니다.${manualNote}`;
+    }
+  };
+
   const removeUser = async (target: UserProfile, actionLabel: string) => {
     setBusyUid(target.uid);
     setFeedback(null);
@@ -96,9 +124,10 @@ function AdminContent() {
       await deleteDoc(doc(db, "users", target.uid));
       // 공개 구성원 페이지에 남지 않도록 공개 프로필도 함께 정리한다
       await deleteDoc(doc(db, "publicProfiles", target.uid));
+      const authNote = await deleteAuthAccount(target.uid);
       setFeedback({
         type: "success",
-        text: `${target.name} 님을 ${actionLabel}했습니다.`,
+        text: `${target.name} 님을 ${actionLabel}했습니다.${authNote}`,
       });
     } catch (err) {
       setFeedback({
@@ -339,8 +368,9 @@ function AdminContent() {
       </section>
 
       <p className="mt-6 text-xs text-gray-500 dark:text-gray-400">
-        거절/삭제는 구성원 정보(users 문서)만 삭제합니다. 로그인 계정(Firebase
-        Auth)은 Firebase Console &gt; Authentication에서 별도로 삭제하세요.
+        거절/삭제는 구성원 정보와 공개 프로필을 삭제합니다. 서버에 서비스 계정
+        키가 등록된 경우 로그인 계정(Firebase Auth)도 함께 삭제되며, 없으면
+        Firebase Console &gt; Authentication에서 별도로 삭제하세요.
       </p>
 
       <LabInfoEditor />

@@ -26,6 +26,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { notifyJoinRequest } from "@/lib/notifyJoin";
 import { UserProfile } from "@/types";
 
 interface AuthContextValue {
@@ -100,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status: "pending",
       createdAt: serverTimestamp(),
     });
+    notifyJoinRequest(cred.user);
   };
 
   const logIn = async (email: string, password: string) => {
@@ -141,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "가입 신청 저장에 실패했습니다. 네트워크 상태를 확인한 뒤 다시 로그인해주세요."
       );
     }
+    notifyJoinRequest(u);
   };
 
   const signInWithGoogle = async () => {

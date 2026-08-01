@@ -53,12 +53,15 @@ export interface Notice {
   createdAt: Timestamp | null;
 }
 
-// Firestore: resources/{resourceId} — 자료실 링크
+// Firestore: resources/{resourceId} — 자료실 링크 또는 업로드 파일
+// fileName이 있으면 url은 Vercel Blob에 업로드된 파일을 가리킨다
 export interface ResourceLink {
   id: string;
   title: string;
   url: string;
   description: string;
+  fileName?: string;
+  fileSize?: number; // bytes
   createdBy: string;
   createdByName: string;
   createdAt: Timestamp | null;

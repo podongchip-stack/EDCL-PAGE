@@ -164,7 +164,9 @@ export default function SearchModal({ onClose }: SearchModalProps) {
             key: "resources",
             label: "자료",
             items: data.resources
-              .filter((r) => matches(q, r.title, r.description, r.url))
+              .filter((r) =>
+                matches(q, r.title, r.description, r.url, r.fileName)
+              )
               .slice(0, MAX_PER_GROUP)
               .map((r) => ({
                 id: r.id,

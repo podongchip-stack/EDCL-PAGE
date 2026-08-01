@@ -278,6 +278,32 @@ describe("소유권 기반 삭제", () => {
     await assertSucceeds(deleteDoc(doc(db(MEMBER_UID), "resources", "res1")));
   });
 
+  it("자료는 정의된 필드로만 만들 수 있다 (파일 업로드 필드 포함)", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(MEMBER_UID), "resources", "res-file"), {
+        title: "업로드 파일",
+        url: "https://store.public.blob.vercel-storage.com/resources/uid/a.pdf",
+        description: "",
+        fileName: "a.pdf",
+        fileSize: 1024,
+        createdBy: MEMBER_UID,
+        createdByName: "구성원",
+        createdAt: new Date(),
+      })
+    );
+    await assertFails(
+      setDoc(doc(db(MEMBER_UID), "resources", "res-extra"), {
+        title: "위조",
+        url: "https://example.com",
+        description: "",
+        extraField: "임의 필드",
+        createdBy: MEMBER_UID,
+        createdByName: "구성원",
+        createdAt: new Date(),
+      })
+    );
+  });
+
   it("예약은 createdBy를 위조해 만들 수 없다", async () => {
     await assertFails(
       setDoc(doc(db(MEMBER_UID), "bookings", "b1"), {
