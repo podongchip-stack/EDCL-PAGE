@@ -10,7 +10,9 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { db } from "@/lib/firebase";
+import { publicStrings } from "@/lib/publicStrings";
 import { Publication } from "@/types";
 
 const inputClass =
@@ -19,6 +21,8 @@ const inputClass =
 // 공개 페이지 — 목록은 누구나 볼 수 있고, 등록/삭제는 승인된 구성원만 가능
 export default function PublicationsPage() {
   const { user, profile } = useAuth();
+  const { lang } = useLanguage();
+  const t = publicStrings(lang).publications;
   const [pubs, setPubs] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -48,7 +52,7 @@ export default function PublicationsPage() {
         setLoading(false);
       },
       () => {
-        setLoadError("논문 목록을 불러오지 못했습니다.");
+        setLoadError("error");
         setLoading(false);
       }
     );
@@ -114,7 +118,7 @@ export default function PublicationsPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          논문
+          {t.title}
         </h1>
         {canManage && (
           <button
@@ -130,12 +134,12 @@ export default function PublicationsPage() {
         )}
       </div>
       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        EDCL 연구실의 연구 성과와 출판물입니다.
+        {t.subtitle}
       </p>
 
       {loadError && (
         <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
-          {loadError}
+          {t.loadError}
         </p>
       )}
 
@@ -252,12 +256,12 @@ export default function PublicationsPage() {
       <div className="mt-6 space-y-6">
         {loading ? (
           <p className="text-sm text-gray-400 dark:text-gray-500">
-            불러오는 중...
+            {t.loading}
           </p>
         ) : pubs.length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white p-10 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              등록된 논문이 아직 없습니다.
+              {t.empty}
             </p>
           </div>
         ) : (

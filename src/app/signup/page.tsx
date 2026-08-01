@@ -5,26 +5,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { AuthStrings, publicStrings } from "@/lib/publicStrings";
 import SocialLoginButtons from "@/components/SocialLoginButtons";
 
-function signUpErrorMessage(err: unknown): string {
+function signUpErrorMessage(err: unknown, t: AuthStrings): string {
   if (err instanceof FirebaseError) {
     switch (err.code) {
       case "auth/email-already-in-use":
-        return "이미 사용 중인 이메일입니다.";
+        return t.errEmailInUse;
       case "auth/invalid-email":
-        return "이메일 형식이 올바르지 않습니다.";
+        return t.errInvalidEmail;
       case "auth/weak-password":
-        return "비밀번호가 너무 약합니다. 6자 이상으로 설정해주세요.";
+        return t.errWeakPassword;
       case "auth/network-request-failed":
-        return "네트워크 오류가 발생했습니다. 연결 상태를 확인해주세요.";
+        return t.errNetwork;
     }
   }
-  return "회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.";
+  return t.errSignupFail;
 }
 
 export default function SignUpPage() {
   const { signUp } = useAuth();
+  const { lang } = useLanguage();
+  const t = publicStrings(lang).auth;
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -34,6 +38,9 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const inputClass =
+    "mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500";
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (submitting) return;
@@ -41,15 +48,15 @@ export default function SignUpPage() {
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setError("이름을 입력해주세요.");
+      setError(t.errNameRequired);
       return;
     }
     if (password.length < 6) {
-      setError("비밀번호는 6자 이상이어야 합니다.");
+      setError(t.errPwLength);
       return;
     }
     if (password !== passwordConfirm) {
-      setError("비밀번호 확인이 일치하지 않습니다.");
+      setError(t.errPwMismatch);
       return;
     }
 
@@ -58,7 +65,7 @@ export default function SignUpPage() {
       await signUp(trimmedName, email.trim(), password);
       router.replace("/pending");
     } catch (err) {
-      setError(signUpErrorMessage(err));
+      setError(signUpErrorMessage(err, t));
       setSubmitting(false);
     }
   };
@@ -68,10 +75,10 @@ export default function SignUpPage() {
       <div className="mx-auto mt-8 w-full max-w-sm">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            회원가입
+            {t.signupTitle}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            가입 후 관리자 승인이 필요합니다.
+            {t.signupSubtitle}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -80,7 +87,7 @@ export default function SignUpPage() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                이름
+                {t.name}
               </label>
               <input
                 id="name"
@@ -89,8 +96,8 @@ export default function SignUpPage() {
                 autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-                placeholder="홍길동"
+                className={inputClass}
+                placeholder={t.namePlaceholder}
               />
             </div>
 
@@ -99,7 +106,7 @@ export default function SignUpPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                이메일
+                {t.email}
               </label>
               <input
                 id="email"
@@ -108,7 +115,7 @@ export default function SignUpPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+                className={inputClass}
                 placeholder="you@example.com"
               />
             </div>
@@ -118,7 +125,7 @@ export default function SignUpPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                비밀번호
+                {t.password}
               </label>
               <input
                 id="password"
@@ -127,8 +134,8 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-                placeholder="6자 이상"
+                className={inputClass}
+                placeholder={t.passwordPlaceholder}
               />
             </div>
 
@@ -137,7 +144,7 @@ export default function SignUpPage() {
                 htmlFor="passwordConfirm"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                비밀번호 확인
+                {t.passwordConfirm}
               </label>
               <input
                 id="passwordConfirm"
@@ -146,8 +153,8 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-                placeholder="비밀번호 재입력"
+                className={inputClass}
+                placeholder={t.passwordConfirmPlaceholder}
               />
             </div>
 
@@ -162,19 +169,19 @@ export default function SignUpPage() {
               disabled={submitting}
               className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "가입 처리 중..." : "회원가입"}
+              {submitting ? t.signingUp : t.signupButton}
             </button>
           </form>
 
           <SocialLoginButtons onError={setError} />
 
           <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            이미 계정이 있나요?{" "}
+            {t.haveAccount}{" "}
             <Link
               href="/login"
               className="font-medium text-blue-600 hover:underline dark:text-blue-400"
             >
-              로그인
+              {t.loginLink}
             </Link>
           </p>
         </div>

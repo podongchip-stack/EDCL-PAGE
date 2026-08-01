@@ -2,10 +2,11 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   browserLocalPersistence,
   browserPopupRedirectResolver,
+  connectAuthEmulator,
   getAuth,
   initializeAuth,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 
 const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
@@ -43,3 +44,19 @@ export const auth =
         popupRedirectResolver: browserPopupRedirectResolver,
       });
 export const db = getFirestore(app);
+
+// E2E 테스트(npm run test:e2e) 전용: 에뮬레이터 모드에서만 로컬 에뮬레이터에 연결한다.
+// NEXT_PUBLIC_USE_EMULATORS는 배포 환경에 설정하지 않으므로 실제 서비스에는 영향이 없다.
+if (
+  process.env.NEXT_PUBLIC_USE_EMULATORS === "1" &&
+  typeof window !== "undefined"
+) {
+  const flags = window as unknown as { __edclEmulators?: boolean };
+  if (!flags.__edclEmulators) {
+    flags.__edclEmulators = true;
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", {
+      disableWarnings: true,
+    });
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  }
+}

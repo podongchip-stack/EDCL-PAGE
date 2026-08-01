@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
 
@@ -25,10 +26,12 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
-          <AuthProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+            </AuthProvider>
+          </LanguageProvider>
         </ThemeProvider>
         <Analytics />
       </body>

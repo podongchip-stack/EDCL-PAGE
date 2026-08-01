@@ -4,9 +4,13 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { FirebaseError } from "firebase/app";
 import { sendPasswordResetEmail } from "firebase/auth";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { publicStrings } from "@/lib/publicStrings";
 import { auth } from "@/lib/firebase";
 
 export default function ResetPasswordPage() {
+  const { lang } = useLanguage();
+  const t = publicStrings(lang).auth;
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,17 +27,17 @@ export default function ResetPasswordPage() {
     } catch (err) {
       if (err instanceof FirebaseError) {
         if (err.code === "auth/invalid-email") {
-          setError("이메일 형식이 올바르지 않습니다.");
+          setError(t.errInvalidEmail);
         } else if (err.code === "auth/user-not-found") {
           // 가입 여부가 노출되지 않도록 성공과 동일하게 안내한다
           setSent(true);
         } else if (err.code === "auth/too-many-requests") {
-          setError("요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+          setError(t.errTooMany);
         } else {
-          setError("메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+          setError(t.errResetFail);
         }
       } else {
-        setError("메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        setError(t.errResetFail);
       }
     } finally {
       setSubmitting(false);
@@ -45,23 +49,22 @@ export default function ResetPasswordPage() {
       <div className="mx-auto mt-8 w-full max-w-sm">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            비밀번호 재설정
+            {t.resetTitle}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            가입한 이메일로 재설정 링크를 보내드립니다.
+            {t.resetSubtitle}
           </p>
 
           {sent ? (
             <div className="mt-6">
               <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-950/50 dark:text-green-400">
-                입력하신 주소로 재설정 메일을 발송했습니다. 받은편지함(스팸함
-                포함)을 확인해주세요.
+                {t.resetSent}
               </p>
               <Link
                 href="/login"
                 className="mt-4 block w-full rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-blue-700"
               >
-                로그인으로 돌아가기
+                {t.backToLogin}
               </Link>
             </div>
           ) : (
@@ -71,7 +74,7 @@ export default function ResetPasswordPage() {
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                  이메일
+                  {t.email}
                 </label>
                 <input
                   id="email"
@@ -96,19 +99,19 @@ export default function ResetPasswordPage() {
                 disabled={submitting}
                 className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {submitting ? "발송 중..." : "재설정 메일 보내기"}
+                {submitting ? t.sending : t.resetButton}
               </button>
             </form>
           )}
 
           {!sent && (
             <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-              비밀번호가 기억나셨나요?{" "}
+              {t.remembered}{" "}
               <Link
                 href="/login"
                 className="font-medium text-blue-600 hover:underline dark:text-blue-400"
               >
-                로그인
+                {t.loginLink}
               </Link>
             </p>
           )}

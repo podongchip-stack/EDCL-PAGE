@@ -1,38 +1,58 @@
 # EDCL LAB 페이지
 
-연구실 구성원끼리 일정과 진행중인 작업을 공유하는 내부 웹페이지.
-**기존에 사용하던 LAB PAGE를 리뉴얼**한 프로젝트다 (회원 승인제·공유 일정표·작업 관리 중심으로 재구축).
+연구실 공개 홈페이지 + 구성원 내부 협업 도구.
+공개 영역(소개·구성원·논문)은 누구나 볼 수 있고, 내부 도구(일정·프로젝트·자료·예약 등)는 가입 후 관리자 승인을 받은 구성원만 사용한다.
 
 - **스택**: Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 + Firebase (Authentication / Firestore)
-- **배포**: Vercel
+- **배포**: Vercel (main 브랜치 push 시 자동 배포)
+- **분석**: Vercel Web Analytics (대시보드에서 활성화 필요)
 
 ## 기능
 
+### 공개 영역 (로그인 불필요)
+
 | 경로 | 설명 |
 |------|------|
-| `/` | 대시보드 — 다가오는 일정 + 진행중인 작업 요약 |
-| `/login`, `/signup` | 로그인 / 회원가입 — 이메일/비밀번호 + Google/GitHub 소셜 로그인 (가입 후 관리자 승인 필요) |
-| `/pending` | 승인 대기 안내 |
-| `/calendar` | 공유 일정표 — 월간 캘린더 + 다가오는 일정 리스트 |
-| `/projects` | 프로젝트별 작업 관리 (상태·담당자·마감일) |
-| `/admin` | 관리자 — 가입 승인/거절, 역할 변경 (admin 전용) |
+| `/` | 연구실 소개 랜딩 (관리자가 소개 문구 편집, 한/영 전환) |
+| `/members` | 구성원 소개 — 각자 공개를 켠 프로필만 표시 |
+| `/publications` | 논문/출판물 목록 (연도별) |
+
+### 내부 도구 (승인된 구성원)
+
+| 경로 | 설명 |
+|------|------|
+| `/` (로그인 시) | 대시보드 — 공지사항, 담당 순번, 내 작업, 다가오는 일정, 진행중인 작업 |
+| `/calendar` | 공유 일정표 — 월/주 뷰, 카테고리 색상(세미나·미팅·마감·휴가·기타), 반복 일정, iCal 내보내기 |
+| `/projects` | 프로젝트별 작업 관리 — 목록/칸반 보드, 담당자·마감일, 휴지통(복원/영구삭제) |
+| `/resources` | 자료실 — 논문·드라이브 등 링크 공유 |
+| `/bookings` | 회의실·장비 시간대 예약 (겹침 방지) |
+| `/settings` | 화면 테마(시스템/라이트/다크), 이름 변경, 공개 프로필 관리 |
+| `/help` | 사용 도움말 |
+| `/admin` | 관리자 — 가입 승인/역할 관리, 연구실 소개 편집, 담당 순번, 예약 항목, 데이터 JSON 백업 |
+
+공통: 상단 돋보기 또는 `Ctrl+K`로 통합 검색 (일정·프로젝트·작업·공지·자료).
+
+### 로그인/계정
+
+- 이메일/비밀번호 + Google/GitHub 소셜 로그인 (소셜 첫 로그인 시 자동으로 승인 대기 계정 생성)
+- 비밀번호 재설정: `/reset-password`
+- 가입 후 관리자 승인(approved) 전에는 `/pending` 대기 화면만 표시
 
 ## 1. Firebase 프로젝트 준비 (최초 1회)
 
 1. [Firebase Console](https://console.firebase.google.com)에서 **프로젝트 추가** (예: `edcl-lab`)
 2. **빌드 > Authentication > 시작하기 > 이메일/비밀번호** 사용 설정
    - 소셜 로그인을 쓰려면 **Google**(토글만), **GitHub**(GitHub OAuth App의 Client ID/Secret 필요)도 각각 사용 설정
-   - 소셜 첫 로그인 시 자동으로 승인 대기(pending) 계정이 생성된다 (별도 회원가입 불필요)
-3. **빌드 > Firestore Database > 데이터베이스 만들기** — 위치는 `asia-northeast3`(서울) 권장, **프로덕션 모드**로 시작
-4. **프로젝트 설정(톱니바퀴) > 일반 > 내 앱 > 웹 앱 추가(</>)** — 앱 등록 후 표시되는 `firebaseConfig` 값을 확보
-5. **Firestore Database > 규칙** 탭에 이 저장소의 `firestore.rules` 파일 내용을 붙여넣고 **게시**
+3. **빌드 > Firestore Database > 데이터베이스 만들기** — **프로덕션 모드**로 시작
+4. **프로젝트 설정(톱니바퀴) > 일반 > 내 앱 > 웹 앱 추가(</>)** — 표시되는 `firebaseConfig` 값을 확보
+5. 보안 규칙 배포: `npx firebase-tools deploy --only firestore:rules --project <프로젝트ID>`
+   (또는 콘솔 규칙 탭에 `firestore.rules` 내용을 붙여넣고 게시)
 
 ## 2. 로컬 실행
 
 ```bash
-# 저장소 루트에서
 copy .env.example .env.local
-# → .env.local 을 열어 1-4에서 확보한 firebaseConfig 값을 채운다
+# → .env.local 에 1-4에서 확보한 firebaseConfig 값을 채운다
 
 npm install
 npm run dev
@@ -52,22 +72,52 @@ http://localhost:3000 접속.
    로 직접 수정
 3. 이후의 가입자는 사이트의 `/admin` 페이지에서 승인/관리
 
-## 4. Vercel 배포
+## 4. 테스트
+
+JDK가 설치되어 있어야 한다 (Firebase 에뮬레이터가 Java로 동작).
+
+```bash
+# Firestore 보안규칙 테스트 (에뮬레이터에서 규칙 회귀 검증)
+npm run test:rules
+
+# E2E 스모크 테스트 (에뮬레이터 + Playwright — 공개 페이지, 가입→승인→일정 등록 흐름)
+npx playwright install chromium   # 최초 1회
+npm run test:e2e
+```
+
+E2E는 Firebase **에뮬레이터**를 사용하므로 실제 데이터에 영향을 주지 않는다.
+(`NEXT_PUBLIC_USE_EMULATORS=1`일 때만 앱이 에뮬레이터에 붙는다 — 배포 빌드에는 영향 없음)
+
+## 5. Vercel 배포
 
 1. 이 저장소를 GitHub에 push
 2. [Vercel](https://vercel.com)에서 **Add New > Project** → 해당 GitHub 저장소 Import (Next.js 자동 감지)
 3. **Settings > Environment Variables**에 `.env.local` 과 동일한 `NEXT_PUBLIC_FIREBASE_*` 6개 값을 등록
 4. Deploy 후 발급된 도메인(예: `xxx.vercel.app`)을
    Firebase Console > **Authentication > 설정 > 승인된 도메인**에 추가
+5. (선택) Vercel 대시보드 > 프로젝트 > **Analytics** 탭에서 Web Analytics 활성화
+
+이후에는 main 브랜치에 push하면 자동으로 배포된다.
+보안 규칙(`firestore.rules`)을 수정한 경우에는 별도로 규칙 배포가 필요하다(1-5 참고).
 
 ## 데이터 구조 (Firestore)
 
 | 컬렉션 | 문서 내용 |
 |--------|-----------|
 | `users/{uid}` | name, email, role(`admin`\|`member`), status(`pending`\|`approved`), createdAt |
-| `events/{id}` | title, description, start, end, allDay, createdBy, createdByName, createdAt |
-| `projects/{id}` | name, description, status(`active`\|`archived`), createdBy, createdAt |
+| `events/{id}` | title, description, category(`seminar`\|`meeting`\|`deadline`\|`vacation`\|`etc`), start, end, createdBy, createdByName, createdAt — 날짜 단위(시작일 00:00 ~ 종료일 23:59) |
+| `projects/{id}` | name, description, status(`active`\|`archived`\|`deleted`), deletedAt, createdBy, createdAt |
 | `tasks/{id}` | projectId, title, status(`todo`\|`in_progress`\|`done`), assigneeUid, assigneeName, dueDate, createdBy, createdAt |
+| `notices/{id}` | title, content, pinned, createdBy, createdByName, createdAt (관리자만 작성) |
+| `resources/{id}` | title, url, description, createdBy, createdByName, createdAt |
+| `publications/{id}` | title, authors, venue, year, link, createdBy, createdAt (공개 읽기) |
+| `publicProfiles/{uid}` | name, position, interests, visible, updatedAt (visible=true만 공개 읽기, 승인된 본인/관리자만 쓰기) |
+| `siteContent/labInfo` | intro, introEn, professor, contact (공개 읽기, 관리자만 쓰기) |
+| `bookableItems/{id}` | name, description, createdAt (관리자만 관리) |
+| `bookings/{id}` | itemId, itemName, date(`YYYY-MM-DD`), startMin, endMin, purpose, createdBy, createdByName, createdAt |
+| `rotations/{id}` | title, members[], anchorDate, intervalWeeks, createdAt (관리자만 관리) |
 
 접근 제어는 `firestore.rules`가 강제한다:
-승인(`approved`)된 구성원만 내부 데이터를 읽고 쓸 수 있으며, 가입은 항상 `member`/`pending`으로 시작되고, 승인·역할 변경은 admin만 가능하다.
+승인(`approved`)된 구성원만 내부 데이터를 읽고 쓸 수 있고, 가입은 항상 `member`/`pending`으로 시작되며, 승인·역할 변경·공지·순번·예약 항목·사이트 문구는 admin만 관리한다.
+공개 컬렉션(publications, visible한 publicProfiles, siteContent)만 비로그인 읽기가 허용된다.
+규칙 회귀는 `npm run test:rules`가 검증한다.

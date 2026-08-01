@@ -5,30 +5,34 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { AuthStrings, publicStrings } from "@/lib/publicStrings";
 import SocialLoginButtons from "@/components/SocialLoginButtons";
 
-function loginErrorMessage(err: unknown): string {
+function loginErrorMessage(err: unknown, t: AuthStrings): string {
   if (err instanceof FirebaseError) {
     switch (err.code) {
       case "auth/invalid-credential":
       case "auth/user-not-found":
       case "auth/wrong-password":
-        return "이메일 또는 비밀번호가 올바르지 않습니다.";
+        return t.errInvalidCredential;
       case "auth/invalid-email":
-        return "이메일 형식이 올바르지 않습니다.";
+        return t.errInvalidEmail;
       case "auth/too-many-requests":
-        return "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.";
+        return t.errTooMany;
       case "auth/user-disabled":
-        return "비활성화된 계정입니다. 관리자에게 문의하세요.";
+        return t.errDisabled;
       case "auth/network-request-failed":
-        return "네트워크 오류가 발생했습니다. 연결 상태를 확인해주세요.";
+        return t.errNetwork;
     }
   }
-  return "로그인에 실패했습니다. 잠시 후 다시 시도해주세요.";
+  return t.errLoginFail;
 }
 
 export default function LoginPage() {
   const { user, loading, logIn, socialSignInPending } = useAuth();
+  const { lang } = useLanguage();
+  const t = publicStrings(lang).auth;
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -54,7 +58,7 @@ export default function LoginPage() {
       await logIn(email.trim(), password);
       router.replace("/");
     } catch (err) {
-      setError(loginErrorMessage(err));
+      setError(loginErrorMessage(err, t));
       setSubmitting(false);
     }
   };
@@ -72,10 +76,10 @@ export default function LoginPage() {
       <div className="mx-auto mt-8 w-full max-w-sm">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            로그인
+            {t.loginTitle}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            EDCL 연구실 계정으로 로그인하세요.
+            {t.loginSubtitle}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -84,7 +88,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                이메일
+                {t.email}
               </label>
               <input
                 id="email"
@@ -104,13 +108,13 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                  비밀번호
+                  {t.password}
                 </label>
                 <Link
                   href="/reset-password"
                   className="text-xs text-gray-500 hover:text-blue-600 hover:underline dark:text-gray-400 dark:hover:text-blue-400"
                 >
-                  비밀번호를 잊으셨나요?
+                  {t.forgotPassword}
                 </Link>
               </div>
               <input
@@ -121,7 +125,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-                placeholder="비밀번호"
+                placeholder={t.password}
               />
             </div>
 
@@ -136,19 +140,19 @@ export default function LoginPage() {
               disabled={submitting}
               className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "로그인 중..." : "로그인"}
+              {submitting ? t.loggingIn : t.loginButton}
             </button>
           </form>
 
           <SocialLoginButtons onError={setError} />
 
           <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            아직 계정이 없나요?{" "}
+            {t.noAccount}{" "}
             <Link
               href="/signup"
               className="font-medium text-blue-600 hover:underline dark:text-blue-400"
             >
-              회원가입
+              {t.signupLink}
             </Link>
           </p>
         </div>

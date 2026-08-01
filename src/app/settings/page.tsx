@@ -188,9 +188,17 @@ function SettingsContent() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        설정
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          설정
+        </h1>
+        <Link
+          href="/help"
+          className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+        >
+          도움말 →
+        </Link>
+      </div>
 
       <section className="mt-6 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">

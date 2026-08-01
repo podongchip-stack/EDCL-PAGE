@@ -10,6 +10,7 @@ const inputClass =
 // 공개 랜딩 페이지(siteContent/labInfo)의 소개 문구를 편집한다
 export default function LabInfoEditor() {
   const [intro, setIntro] = useState("");
+  const [introEn, setIntroEn] = useState("");
   const [professor, setProfessor] = useState("");
   const [contact, setContact] = useState("");
   const [saving, setSaving] = useState(false);
@@ -24,6 +25,7 @@ export default function LabInfoEditor() {
         if (snap.exists()) {
           const data = snap.data();
           setIntro(typeof data.intro === "string" ? data.intro : "");
+          setIntroEn(typeof data.introEn === "string" ? data.introEn : "");
           setProfessor(
             typeof data.professor === "string" ? data.professor : ""
           );
@@ -42,6 +44,7 @@ export default function LabInfoEditor() {
     try {
       await setDoc(doc(db, "siteContent", "labInfo"), {
         intro: intro.trim(),
+        introEn: introEn.trim(),
         professor: professor.trim(),
         contact: contact.trim(),
       });
@@ -77,6 +80,23 @@ export default function LabInfoEditor() {
             rows={4}
             disabled={saving}
             placeholder="연구실을 소개하는 문구를 입력하세요."
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="lab-intro-en"
+            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            소개 문구 (영문)
+          </label>
+          <textarea
+            id="lab-intro-en"
+            value={introEn}
+            onChange={(e) => setIntroEn(e.target.value)}
+            rows={4}
+            disabled={saving}
+            placeholder="English introduction (선택 — 비우면 EN 모드에서도 국문이 표시됩니다)"
             className={inputClass}
           />
         </div>

@@ -124,6 +124,7 @@ export interface PublicProfile {
 // Firestore: siteContent/labInfo — 공개 랜딩 페이지 소개 문구 (관리자 편집)
 export interface LabInfo {
   intro: string;
+  introEn?: string; // 영문 소개 (없으면 EN 모드에서도 국문 intro 표시)
   professor: string;
   contact: string;
 }

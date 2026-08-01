@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import SearchModal from "@/components/SearchModal";
 
 const MEMBER_LINKS = [
@@ -15,19 +16,20 @@ const MEMBER_LINKS = [
   { href: "/publications", label: "논문" },
 ];
 
-// 로그인하지 않은 방문자(또는 승인 대기)에게 보이는 공개 페이지 링크
-const PUBLIC_LINKS = [
-  { href: "/members", label: "구성원" },
-  { href: "/publications", label: "논문" },
-];
-
 export default function Navbar() {
   const { user, profile, logOut } = useAuth();
+  const { lang, setLang } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
   const [showSearch, setShowSearch] = useState(false);
 
   const approved = profile?.status === "approved";
+
+  // 로그인하지 않은 방문자(또는 승인 대기)에게 보이는 공개 페이지 링크
+  const publicLinks = [
+    { href: "/members", label: lang === "en" ? "Members" : "구성원" },
+    { href: "/publications", label: lang === "en" ? "Publications" : "논문" },
+  ];
 
   // Ctrl+K / Cmd+K로 통합 검색 열기 (승인된 구성원만)
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function Navbar() {
         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
     }`;
 
-  const links = approved ? MEMBER_LINKS : PUBLIC_LINKS;
+  const links = approved ? MEMBER_LINKS : publicLinks;
 
   const navLinks = (
     <>
@@ -90,6 +92,16 @@ export default function Navbar() {
             <nav className="hidden items-center gap-1 lg:flex">{navLinks}</nav>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {!approved && (
+              <button
+                type="button"
+                onClick={() => setLang(lang === "ko" ? "en" : "ko")}
+                aria-label={lang === "ko" ? "Switch to English" : "한국어로 전환"}
+                className="rounded-md px-2 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              >
+                {lang === "ko" ? "EN" : "한"}
+              </button>
+            )}
             {approved && (
               <button
                 type="button"
@@ -129,7 +141,7 @@ export default function Navbar() {
                 href="/login"
                 className="whitespace-nowrap rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
               >
-                로그인
+                {lang === "en" ? "Login" : "로그인"}
               </Link>
             )}
           </div>
