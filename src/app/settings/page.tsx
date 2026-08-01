@@ -1,8 +1,56 @@
 "use client";
 
+import { useState } from "react";
+import { updateProfile } from "firebase/auth";
+import {
+  collection,
+  doc,
+  DocumentReference,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from "firebase/firestore";
 import AuthGuard from "@/components/AuthGuard";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemePreference, useTheme } from "@/contexts/ThemeContext";
+import { auth, db } from "@/lib/firebase";
+
+// 작업 담당자·일정/공지/자료 작성자로 저장된 비정규화 이름도 함께 갱신한다.
+// (공지는 관리자만 update 가능하므로 관리자일 때만 갱신)
+async function propagateName(uid: string, name: string, isAdmin: boolean) {
+  const updates: { ref: DocumentReference; data: Record<string, string> }[] =
+    [];
+  const [taskSnap, eventSnap, resourceSnap, noticeSnap] = await Promise.all([
+    getDocs(query(collection(db, "tasks"), where("assigneeUid", "==", uid))),
+    getDocs(query(collection(db, "events"), where("createdBy", "==", uid))),
+    getDocs(query(collection(db, "resources"), where("createdBy", "==", uid))),
+    isAdmin
+      ? getDocs(query(collection(db, "notices"), where("createdBy", "==", uid)))
+      : Promise.resolve(null),
+  ]);
+  taskSnap.forEach((d) =>
+    updates.push({ ref: d.ref, data: { assigneeName: name } })
+  );
+  eventSnap.forEach((d) =>
+    updates.push({ ref: d.ref, data: { createdByName: name } })
+  );
+  resourceSnap.forEach((d) =>
+    updates.push({ ref: d.ref, data: { createdByName: name } })
+  );
+  noticeSnap?.forEach((d) =>
+    updates.push({ ref: d.ref, data: { createdByName: name } })
+  );
+  // Firestore batch는 500건 제한이므로 나눠서 커밋
+  for (let i = 0; i < updates.length; i += 450) {
+    const batch = writeBatch(db);
+    for (const u of updates.slice(i, i + 450)) {
+      batch.update(u.ref, u.data);
+    }
+    await batch.commit();
+  }
+}
 
 const THEME_OPTIONS: {
   value: ThemePreference;
@@ -27,8 +75,42 @@ const THEME_OPTIONS: {
 ];
 
 function SettingsContent() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { preference, setPreference } = useTheme();
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  const startNameEdit = () => {
+    setNameInput(profile?.name ?? "");
+    setNameError(null);
+    setEditingName(true);
+  };
+
+  const saveName = async () => {
+    if (!user || savingName) return;
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      setNameError("이름을 입력해주세요.");
+      return;
+    }
+    setSavingName(true);
+    setNameError(null);
+    try {
+      await updateDoc(doc(db, "users", user.uid), { name: trimmed });
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: trimmed });
+      }
+      await propagateName(user.uid, trimmed, profile?.role === "admin");
+      setEditingName(false);
+    } catch {
+      setNameError("이름 변경에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -92,14 +174,62 @@ function SettingsContent() {
           </h2>
         </div>
         <dl className="space-y-3 p-5 text-sm">
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
             <dt className="w-16 shrink-0 text-gray-500 dark:text-gray-400">
               이름
             </dt>
-            <dd className="font-medium text-gray-900 dark:text-gray-100">
-              {profile?.name ?? "-"}
+            <dd className="flex min-w-0 flex-1 items-center gap-2">
+              {editingName ? (
+                <>
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    disabled={savingName}
+                    aria-label="이름"
+                    className="w-40 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveName}
+                    disabled={savingName}
+                    className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {savingName ? "저장 중..." : "저장"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingName(false);
+                      setNameError(null);
+                    }}
+                    disabled={savingName}
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    취소
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="truncate font-medium text-gray-900 dark:text-gray-100">
+                    {profile?.name ?? "-"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={startNameEdit}
+                    className="text-xs text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                  >
+                    수정
+                  </button>
+                </>
+              )}
             </dd>
           </div>
+          {nameError && (
+            <div className="text-xs text-red-600 dark:text-red-400">
+              {nameError}
+            </div>
+          )}
           <div className="flex gap-4">
             <dt className="w-16 shrink-0 text-gray-500 dark:text-gray-400">
               이메일

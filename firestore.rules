@@ -67,5 +67,19 @@ service cloud.firestore {
       allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
       allow update, delete: if isApproved();
     }
+
+    match /notices/{noticeId} {
+      // 공지는 관리자만 작성·수정·삭제
+      allow read: if isApproved();
+      allow create: if isAdmin() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /resources/{resourceId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isApproved()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
+    }
   }
 }

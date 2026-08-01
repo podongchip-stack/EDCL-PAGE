@@ -5,7 +5,10 @@ import Link from "next/link";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AuthGuard from "@/components/AuthGuard";
-import { LabEvent, Project, Task } from "@/types";
+import NoticeBoard from "@/components/NoticeBoard";
+import { useAuth } from "@/contexts/AuthContext";
+import { LabEvent, Project, Task, TASK_STATUS_LABELS } from "@/types";
+import { eventCategoryStyle } from "@/lib/eventCategories";
 import { formatDate, isSameDay, WEEKDAY_LABELS } from "@/lib/dates";
 
 function formatKoreanDate(d: Date): string {
@@ -23,6 +26,7 @@ function eventDateLabel(ev: LabEvent): string {
 }
 
 function DashboardContent() {
+  const { user } = useAuth();
   const [events, setEvents] = useState<LabEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
@@ -93,6 +97,19 @@ function DashboardContent() {
     .sort((a, b) => a.start.toDate().getTime() - b.start.toDate().getTime())
     .slice(0, 5);
 
+  // 내가 담당자인 미완료 작업 (마감일 빠른 순, 마감일 없으면 뒤로)
+  const projectNameById = new Map(projects.map((p) => [p.id, p.name]));
+  const myTasks = user
+    ? tasks
+        .filter((t) => t.assigneeUid === user.uid && t.status !== "done")
+        .sort((a, b) => {
+          const ad = a.dueDate ? a.dueDate.toMillis() : Infinity;
+          const bd = b.dueDate ? b.dueDate.toMillis() : Infinity;
+          if (ad !== bd) return ad - bd;
+          return a.title.localeCompare(b.title, "ko");
+        })
+    : [];
+
   const taskGroups = useMemo(() => {
     const inProgress = tasks.filter((t) => t.status === "in_progress");
     const nameById = new Map(projects.map((p) => [p.id, p.name]));
@@ -130,7 +147,75 @@ function DashboardContent() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <NoticeBoard />
+
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* 내 작업 */}
+        <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">
+              내 작업
+            </h2>
+            <Link
+              href="/projects"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              전체 보기 →
+            </Link>
+          </div>
+          <div className="px-4 py-3">
+            {tasksError ? (
+              <p className="py-4 text-sm text-red-600 dark:text-red-400">
+                {tasksError}
+              </p>
+            ) : tasksSectionLoading ? (
+              <p className="py-4 text-sm text-gray-400 dark:text-gray-500">
+                불러오는 중...
+              </p>
+            ) : myTasks.length === 0 ? (
+              <p className="py-4 text-sm text-gray-500 dark:text-gray-400">
+                담당한 작업이 없습니다.
+              </p>
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {myTasks.map((task) => {
+                  const due = task.dueDate ? task.dueDate.toDate() : null;
+                  const overdue =
+                    due !== null && due.getTime() < startOfToday.getTime();
+                  return (
+                    <li
+                      key={task.id}
+                      className="flex items-center justify-between gap-3 py-2.5"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {task.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {projectNameById.get(task.projectId) ??
+                            "(알 수 없는 프로젝트)"}{" "}
+                          · {TASK_STATUS_LABELS[task.status]}
+                        </p>
+                      </div>
+                      {due && (
+                        <span
+                          className={`shrink-0 text-xs ${
+                            overdue
+                              ? "font-medium text-red-600 dark:text-red-400"
+                              : "text-gray-500 dark:text-gray-400"
+                          }`}
+                        >
+                          ~{formatDate(due)}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </section>
+
         {/* 다가오는 일정 */}
         <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
@@ -158,6 +243,9 @@ function DashboardContent() {
                 {upcomingEvents.map((ev) => (
                   <li key={ev.id} className="py-2.5">
                     <div className="flex items-center gap-2">
+                      <span
+                        className={`h-2 w-2 shrink-0 rounded-full ${eventCategoryStyle(ev).dot}`}
+                      />
                       <span className="truncate font-medium text-gray-900 dark:text-gray-100">
                         {ev.title}
                       </span>
@@ -179,8 +267,10 @@ function DashboardContent() {
           </div>
         </section>
 
-        {/* 진행중인 작업 */}
-        <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      </div>
+
+      {/* 진행중인 작업 */}
+      <section className="mt-6 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">진행중인 작업</h2>
             <Link
@@ -246,8 +336,7 @@ function DashboardContent() {
               </div>
             )}
           </div>
-        </section>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { LabEvent } from "@/types";
+import { eventCategoryStyle } from "@/lib/eventCategories";
 import { WEEKDAY_LABELS, isSameDay, tsToDate } from "@/lib/dates";
 
 const MAX_CHIPS = 3;
@@ -117,9 +118,9 @@ export default function MonthGrid({
                       e.stopPropagation();
                       onEventClick(ev);
                     }}
-                    className={`block w-full truncate rounded bg-blue-600 px-1 py-0.5 text-left text-xs text-white transition-colors hover:bg-blue-700 ${
-                      !inMonth ? "opacity-60" : ""
-                    }`}
+                    className={`block w-full truncate rounded px-1 py-0.5 text-left text-xs transition-colors ${
+                      eventCategoryStyle(ev).chip
+                    } ${!inMonth ? "opacity-60" : ""}`}
                     title={ev.title}
                   >
                     {ev.title}

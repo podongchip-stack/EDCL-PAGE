@@ -99,12 +99,20 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                비밀번호
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  비밀번호
+                </label>
+                <Link
+                  href="/reset-password"
+                  className="text-xs text-gray-500 hover:text-blue-600 hover:underline dark:text-gray-400 dark:hover:text-blue-400"
+                >
+                  비밀번호를 잊으셨나요?
+                </Link>
+              </div>
               <input
                 id="password"
                 type="password"

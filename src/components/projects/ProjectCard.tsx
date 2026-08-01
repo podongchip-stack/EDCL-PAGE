@@ -227,7 +227,7 @@ export default function ProjectCard({
       {sortedTasks.length > 0 ? (
         <ul className="mt-4 space-y-2">
           {sortedTasks.map((t) => (
-            <TaskItem key={t.id} task={t} />
+            <TaskItem key={t.id} task={t} approvedUsers={approvedUsers} />
           ))}
         </ul>
       ) : (

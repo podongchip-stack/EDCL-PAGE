@@ -7,6 +7,11 @@ import MonthGrid from "@/components/calendar/MonthGrid";
 import EventModal from "@/components/calendar/EventModal";
 import { db } from "@/lib/firebase";
 import { LabEvent } from "@/types";
+import {
+  EVENT_CATEGORY_ORDER,
+  EVENT_CATEGORY_STYLES,
+  eventCategoryStyle,
+} from "@/lib/eventCategories";
 import { formatDate, isSameDay, tsToDate } from "@/lib/dates";
 
 type ModalState =
@@ -117,6 +122,19 @@ function CalendarContent() {
             onDayClick={(date) => setModal({ type: "create", date })}
             onEventClick={(ev) => setModal({ type: "view", eventId: ev.id })}
           />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-200 px-4 py-2 dark:border-gray-800">
+            {EVENT_CATEGORY_ORDER.map((c) => (
+              <span
+                key={c}
+                className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400"
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${EVENT_CATEGORY_STYLES[c].dot}`}
+                />
+                {EVENT_CATEGORY_STYLES[c].label}
+              </span>
+            ))}
+          </div>
         </div>
 
         <aside className="w-full shrink-0 lg:w-72">
@@ -143,7 +161,10 @@ function CalendarContent() {
                         }
                         className="w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/60"
                       >
-                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                        <p className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full ${eventCategoryStyle(ev).dot}`}
+                          />
                           {isSameDay(start, end)
                             ? formatDate(start)
                             : `${formatDate(start)} ~ ${formatDate(end)}`}
