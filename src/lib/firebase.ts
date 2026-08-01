@@ -18,11 +18,21 @@ if (!apiKey && typeof window !== "undefined") {
 
 // 환경변수가 없는 빌드(프리렌더) 단계에서도 초기화가 실패하지 않도록 placeholder를 쓴다.
 // 실제 값은 .env.local(로컬) / Vercel 환경변수(배포)에서 주입된다.
+const authDomain =
+  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "placeholder.firebaseapp.com";
+
+// PROJECT_ID 환경변수가 누락돼도 Firestore가 죽지 않도록
+// 표준 authDomain(<projectId>.firebaseapp.com)에서 프로젝트 ID를 유도한다
+const projectId =
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+  (authDomain.endsWith(".firebaseapp.com")
+    ? authDomain.slice(0, -".firebaseapp.com".length)
+    : "placeholder");
+
 const firebaseConfig = {
   apiKey: apiKey || "placeholder-api-key",
-  authDomain:
-    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "placeholder.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "placeholder",
+  authDomain,
+  projectId,
   storageBucket:
     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "placeholder.appspot.com",
   messagingSenderId:
