@@ -136,21 +136,23 @@ export default function ProjectCard({
   };
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {project.name}
             </h2>
             {project.status === "archived" && (
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                 보관됨
               </span>
             )}
           </div>
           {project.description && (
-            <p className="mt-1 text-sm text-gray-600">{project.description}</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {project.description}
+            </p>
           )}
         </div>
 
@@ -158,7 +160,7 @@ export default function ProjectCard({
           <div className="flex shrink-0 items-center gap-2">
             {confirmingDelete ? (
               <>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   작업 {totalCount}개 포함 삭제됩니다
                 </span>
                 <button
@@ -173,7 +175,7 @@ export default function ProjectCard({
                   type="button"
                   onClick={() => setConfirmingDelete(false)}
                   disabled={deleting}
-                  className="text-xs text-gray-500 hover:text-gray-700"
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   취소
                 </button>
@@ -184,14 +186,14 @@ export default function ProjectCard({
                   type="button"
                   onClick={toggleArchive}
                   disabled={archiving}
-                  className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
+                  className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   {project.status === "active" ? "보관" : "복원"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(true)}
-                  className="rounded-md border border-red-200 px-2.5 py-1 text-xs text-red-600 transition-colors hover:bg-red-50"
+                  className="rounded-md border border-red-200 px-2.5 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
                 >
                   삭제
                 </button>
@@ -202,17 +204,19 @@ export default function ProjectCard({
       </div>
 
       {actionError && (
-        <p className="mt-2 text-sm text-red-600">{actionError}</p>
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+          {actionError}
+        </p>
       )}
 
       <div className="mt-4">
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <span>
             완료 {doneCount} / 전체 {totalCount}
           </span>
           <span>{percent}%</span>
         </div>
-        <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
           <div
             className="h-full rounded-full bg-blue-600 transition-all"
             style={{ width: `${percent}%` }}
@@ -227,13 +231,15 @@ export default function ProjectCard({
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-sm text-gray-400">등록된 작업이 없습니다.</p>
+        <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">
+          등록된 작업이 없습니다.
+        </p>
       )}
 
       {showAddForm ? (
         <form
           onSubmit={handleAddTask}
-          className="mt-3 space-y-2 rounded-md border border-gray-200 bg-gray-50 p-3"
+          className="mt-3 space-y-2 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50"
         >
           <input
             type="text"
@@ -241,7 +247,7 @@ export default function ProjectCard({
             onChange={(e) => setTaskTitle(e.target.value)}
             placeholder="작업 제목 (필수)"
             disabled={addSubmitting}
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500"
           />
           <div className="flex flex-wrap gap-2">
             <select
@@ -249,7 +255,7 @@ export default function ProjectCard({
               onChange={(e) => setAssigneeUid(e.target.value)}
               disabled={addSubmitting}
               aria-label="담당자"
-              className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+              className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             >
               <option value="">담당자 없음</option>
               {approvedUsers.map((u) => (
@@ -264,10 +270,12 @@ export default function ProjectCard({
               onChange={(e) => setDueDate(e.target.value)}
               disabled={addSubmitting}
               aria-label="마감일"
-              className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+              className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </div>
-          {addError && <p className="text-xs text-red-600">{addError}</p>}
+          {addError && (
+            <p className="text-xs text-red-600 dark:text-red-400">{addError}</p>
+          )}
           <div className="flex gap-2">
             <button
               type="submit"
@@ -283,7 +291,7 @@ export default function ProjectCard({
                 setAddError("");
               }}
               disabled={addSubmitting}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               취소
             </button>
@@ -293,7 +301,7 @@ export default function ProjectCard({
         <button
           type="button"
           onClick={() => setShowAddForm(true)}
-          className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
+          className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
         >
           + 작업 추가
         </button>

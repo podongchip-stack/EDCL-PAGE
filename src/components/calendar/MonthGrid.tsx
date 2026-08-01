@@ -1,7 +1,7 @@
 "use client";
 
 import { LabEvent } from "@/types";
-import { WEEKDAY_LABELS, formatTime, isSameDay, tsToDate } from "@/lib/dates";
+import { WEEKDAY_LABELS, isSameDay, tsToDate } from "@/lib/dates";
 
 const MAX_CHIPS = 3;
 
@@ -13,7 +13,7 @@ interface MonthGridProps {
   onEventClick: (event: LabEvent) => void;
 }
 
-// 해당 날짜(시작~종료 구간에 걸친)의 일정을 종일 우선, 시작시각순으로 반환
+// 해당 날짜(시작~종료 구간에 걸친)의 일정을 시작일순으로 반환
 function eventsForDay(events: LabEvent[], day: Date): LabEvent[] {
   const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
   const dayEnd = new Date(
@@ -32,10 +32,7 @@ function eventsForDay(events: LabEvent[], day: Date): LabEvent[] {
       if (!start || !end) return false;
       return start <= dayEnd && end >= dayStart;
     })
-    .sort((a, b) => {
-      if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
-      return a.start.toMillis() - b.start.toMillis();
-    });
+    .sort((a, b) => a.start.toMillis() - b.start.toMillis());
 }
 
 export default function MonthGrid({
@@ -60,11 +57,15 @@ export default function MonthGrid({
   );
 
   const weekdayColor = (i: number) =>
-    i === 0 ? "text-red-500" : i === 6 ? "text-blue-600" : "text-gray-600";
+    i === 0
+      ? "text-red-500 dark:text-red-400"
+      : i === 6
+        ? "text-blue-600 dark:text-blue-400"
+        : "text-gray-600 dark:text-gray-400";
 
   return (
     <div>
-      <div className="grid grid-cols-7 border-b border-gray-200">
+      <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-800">
         {WEEKDAY_LABELS.map((label, i) => (
           <div
             key={label}
@@ -74,7 +75,7 @@ export default function MonthGrid({
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-px bg-gray-100">
+      <div className="grid grid-cols-7 gap-px bg-gray-100 dark:bg-gray-800">
         {cells.map((day) => {
           const inMonth = day.getMonth() === month;
           const isToday = isSameDay(day, today);
@@ -86,50 +87,46 @@ export default function MonthGrid({
             <div
               key={day.getTime()}
               onClick={() => onDayClick(day)}
-              className={`min-h-24 cursor-pointer p-1 transition-colors hover:bg-gray-50 ${
-                inMonth ? "bg-white" : "bg-gray-50"
-              } ${isToday ? "bg-blue-50 ring-2 ring-inset ring-blue-500" : ""}`}
+              className={`min-h-24 cursor-pointer p-1 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/70 ${
+                inMonth
+                  ? "bg-white dark:bg-gray-900"
+                  : "bg-gray-50 dark:bg-gray-950"
+              } ${
+                isToday
+                  ? "bg-blue-50 ring-2 ring-inset ring-blue-500 dark:bg-blue-950/40"
+                  : ""
+              }`}
             >
               <span
                 className={`mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
                   isToday
                     ? "bg-blue-600 font-bold text-white"
                     : inMonth
-                      ? "text-gray-700"
-                      : "text-gray-400"
+                      ? "text-gray-700 dark:text-gray-300"
+                      : "text-gray-400 dark:text-gray-600"
                 }`}
               >
                 {day.getDate()}
               </span>
               <div className="space-y-0.5">
-                {visible.map((ev) => {
-                  const start = tsToDate(ev.start);
-                  return (
-                    <button
-                      key={ev.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(ev);
-                      }}
-                      className={`block w-full truncate rounded px-1 py-0.5 text-left text-xs transition-colors ${
-                        ev.allDay
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                      } ${!inMonth ? "opacity-60" : ""}`}
-                      title={ev.title}
-                    >
-                      {!ev.allDay && start && (
-                        <span className="mr-1 font-medium">
-                          {formatTime(start)}
-                        </span>
-                      )}
-                      {ev.title}
-                    </button>
-                  );
-                })}
+                {visible.map((ev) => (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEventClick(ev);
+                    }}
+                    className={`block w-full truncate rounded bg-blue-600 px-1 py-0.5 text-left text-xs text-white transition-colors hover:bg-blue-700 ${
+                      !inMonth ? "opacity-60" : ""
+                    }`}
+                    title={ev.title}
+                  >
+                    {ev.title}
+                  </button>
+                ))}
                 {overflow > 0 && (
-                  <div className="px-1 text-xs text-gray-500">
+                  <div className="px-1 text-xs text-gray-500 dark:text-gray-400">
                     +{overflow}개
                   </div>
                 )}

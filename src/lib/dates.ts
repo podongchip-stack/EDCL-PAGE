@@ -15,16 +15,6 @@ export function formatDate(d: Date): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-// HH:mm
-export function formatTime(d: Date): string {
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-}
-
-// YYYY-MM-DD HH:mm
-export function formatDateTime(d: Date): string {
-  return `${formatDate(d)} ${formatTime(d)}`;
-}
-
 export function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&

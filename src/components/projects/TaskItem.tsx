@@ -7,9 +7,9 @@ import { formatDate, tsToDate } from "@/lib/dates";
 import { Task, TASK_STATUS_LABELS, TaskStatus } from "@/types";
 
 const STATUS_BADGE_CLASSES: Record<TaskStatus, string> = {
-  todo: "bg-gray-100 text-gray-700",
-  in_progress: "bg-blue-100 text-blue-700",
-  done: "bg-green-100 text-green-700",
+  todo: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  in_progress: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  done: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
 };
 
 interface TaskItemProps {
@@ -74,7 +74,7 @@ export default function TaskItem({ task }: TaskItemProps) {
   };
 
   return (
-    <li className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+    <li className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-800/50">
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={task.status}
@@ -97,7 +97,7 @@ export default function TaskItem({ task }: TaskItemProps) {
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               disabled={saving}
-              className="w-full min-w-0 flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full min-w-0 flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
             <button
               type="button"
@@ -114,7 +114,7 @@ export default function TaskItem({ task }: TaskItemProps) {
                 setError("");
               }}
               disabled={saving}
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               취소
             </button>
@@ -123,21 +123,23 @@ export default function TaskItem({ task }: TaskItemProps) {
           <span
             className={`min-w-0 flex-1 truncate text-sm ${
               task.status === "done"
-                ? "text-gray-400 line-through"
-                : "text-gray-800"
+                ? "text-gray-400 line-through dark:text-gray-500"
+                : "text-gray-800 dark:text-gray-200"
             }`}
           >
             {task.title}
           </span>
         )}
 
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-500 dark:text-gray-400">
           {task.assigneeName ?? "담당자 없음"}
         </span>
         {due && (
           <span
             className={`text-xs ${
-              overdue ? "font-semibold text-red-600" : "text-gray-500"
+              overdue
+                ? "font-semibold text-red-600 dark:text-red-400"
+                : "text-gray-500 dark:text-gray-400"
             }`}
           >
             {formatDate(due)}
@@ -155,7 +157,7 @@ export default function TaskItem({ task }: TaskItemProps) {
               setError("");
             }}
             disabled={deleting}
-            className="text-xs text-gray-500 hover:text-blue-600"
+            className="text-xs text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
           >
             수정
           </button>
@@ -174,7 +176,7 @@ export default function TaskItem({ task }: TaskItemProps) {
               type="button"
               onClick={() => setConfirmingDelete(false)}
               disabled={deleting}
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               취소
             </button>
@@ -184,13 +186,15 @@ export default function TaskItem({ task }: TaskItemProps) {
             type="button"
             onClick={() => setConfirmingDelete(true)}
             disabled={deleting}
-            className="text-xs text-gray-500 hover:text-red-600"
+            className="text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
           >
             삭제
           </button>
         )}
       </div>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && (
+        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>
+      )}
     </li>
   );
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FirebaseError } from "firebase/app";
-import { useAuth } from "@/contexts/AuthContext";
+import { SocialSignInError, useAuth } from "@/contexts/AuthContext";
 
 // null 반환은 "오류 표시 없음"(사용자가 팝업을 직접 닫은 경우)을 뜻한다.
 function socialErrorMessage(err: unknown): string | null {
@@ -23,7 +23,9 @@ function socialErrorMessage(err: unknown): string | null {
     }
     return "소셜 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.";
   }
-  if (err instanceof Error && err.message) {
+  // 안내용으로 만든 오류만 원문을 보여주고, 그 외(SDK 내부 오류 등)는
+  // 영어 원문이 노출되지 않도록 일반 메시지로 통일한다.
+  if (err instanceof SocialSignInError) {
     return err.message;
   }
   return "소셜 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.";
@@ -58,14 +60,14 @@ export default function SocialLoginButtons({
   };
 
   const buttonClass =
-    "flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60";
+    "flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700";
 
   return (
     <div className="mt-6">
       <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-gray-200" />
-        <span className="text-xs text-gray-400">또는</span>
-        <div className="h-px flex-1 bg-gray-200" />
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+        <span className="text-xs text-gray-400 dark:text-gray-500">또는</span>
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
       </div>
 
       <div className="mt-4 space-y-2">
@@ -104,7 +106,7 @@ export default function SocialLoginButtons({
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
             <path
-              fill="#181717"
+              className="fill-[#181717] dark:fill-gray-100"
               d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.35.95.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 2.87-.39c.97 0 1.95.13 2.87.39 2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.7 5.38-5.26 5.67.41.35.78 1.05.78 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.2.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"
             />
           </svg>

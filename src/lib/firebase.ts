@@ -1,5 +1,10 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  browserPopupRedirectResolver,
+  getAuth,
+  initializeAuth,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -26,5 +31,15 @@ const firebaseConfig = {
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+// 기본값인 IndexedDB 저장소는 소셜 로그인 팝업이 탭을 가리면 연결을 닫아
+// "Database is closing/hidden" 오류로 로그인이 실패한다. localStorage 저장소는
+// 이 동작이 없고, 오리진 격리 기반 보안 수준은 IndexedDB와 동일하다.
+// initializeAuth는 팝업 리졸버를 자동 등록하지 않으므로 명시적으로 넘긴다.
+export const auth =
+  typeof window === "undefined"
+    ? getAuth(app)
+    : initializeAuth(app, {
+        persistence: browserLocalPersistence,
+        popupRedirectResolver: browserPopupRedirectResolver,
+      });
 export const db = getFirestore(app);

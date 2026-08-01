@@ -25,19 +25,22 @@ export default function Navbar() {
   const linkClass = (href: string) =>
     `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
       pathname === href
-        ? "bg-blue-50 text-blue-700"
-        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
     }`;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-lg font-bold text-blue-700">
+        <div className="flex min-w-0 items-center gap-6">
+          <Link
+            href="/"
+            className="shrink-0 text-lg font-bold text-blue-700 dark:text-blue-400"
+          >
             EDCL LAB
           </Link>
           {approved && (
-            <nav className="flex items-center gap-1">
+            <nav className="flex items-center gap-1 overflow-x-auto">
               {NAV_LINKS.map((link) => (
                 <Link key={link.href} href={link.href} className={linkClass(link.href)}>
                   {link.label}
@@ -48,18 +51,21 @@ export default function Navbar() {
                   관리자
                 </Link>
               )}
+              <Link href="/settings" className={linkClass("/settings")}>
+                설정
+              </Link>
             </nav>
           )}
         </div>
-        <div>
+        <div className="shrink-0">
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="hidden text-sm text-gray-600 sm:inline">
+              <span className="hidden text-sm text-gray-600 sm:inline dark:text-gray-400">
                 {profile?.name ?? user.email}
               </span>
               <button
                 onClick={handleLogout}
-                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 로그아웃
               </button>

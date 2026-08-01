@@ -6,13 +6,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AuthGuard from "@/components/AuthGuard";
 import { LabEvent, Project, Task } from "@/types";
-import {
-  formatDate,
-  formatDateTime,
-  formatTime,
-  isSameDay,
-  WEEKDAY_LABELS,
-} from "@/lib/dates";
+import { formatDate, isSameDay, WEEKDAY_LABELS } from "@/lib/dates";
 
 function formatKoreanDate(d: Date): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${
@@ -20,18 +14,12 @@ function formatKoreanDate(d: Date): string {
   })`;
 }
 
-function eventTimeLabel(ev: LabEvent): string {
+function eventDateLabel(ev: LabEvent): string {
   const start = ev.start.toDate();
   const end = ev.end.toDate();
-  if (ev.allDay) {
-    return isSameDay(start, end)
-      ? formatDate(start)
-      : `${formatDate(start)} ~ ${formatDate(end)}`;
-  }
-  if (isSameDay(start, end)) {
-    return `${formatDate(start)} ${formatTime(start)} ~ ${formatTime(end)}`;
-  }
-  return `${formatDateTime(start)} ~ ${formatDateTime(end)}`;
+  return isSameDay(start, end)
+    ? formatDate(start)
+    : `${formatDate(start)} ~ ${formatDate(end)}`;
 }
 
 function DashboardContent() {
@@ -137,36 +125,40 @@ function DashboardContent() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-bold">대시보드</h1>
-        <p className="text-sm text-gray-500">{formatKoreanDate(now)}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {formatKoreanDate(now)}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* 다가오는 일정 */}
-        <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-            <h2 className="font-semibold text-gray-900">다가오는 일정</h2>
+        <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">다가오는 일정</h2>
             <Link
               href="/calendar"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
               전체 보기 →
             </Link>
           </div>
           <div className="px-4 py-3">
             {eventsError ? (
-              <p className="py-4 text-sm text-red-600">{eventsError}</p>
+              <p className="py-4 text-sm text-red-600 dark:text-red-400">{eventsError}</p>
             ) : eventsLoading ? (
-              <p className="py-4 text-sm text-gray-400">불러오는 중...</p>
+              <p className="py-4 text-sm text-gray-400 dark:text-gray-500">
+                불러오는 중...
+              </p>
             ) : upcomingEvents.length === 0 ? (
-              <p className="py-4 text-sm text-gray-500">
+              <p className="py-4 text-sm text-gray-500 dark:text-gray-400">
                 예정된 일정이 없습니다.
               </p>
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                 {upcomingEvents.map((ev) => (
                   <li key={ev.id} className="py-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-medium text-gray-900">
+                      <span className="truncate font-medium text-gray-900 dark:text-gray-100">
                         {ev.title}
                       </span>
                       {isSameDay(ev.start.toDate(), now) && (
@@ -175,9 +167,9 @@ function DashboardContent() {
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-gray-500">
-                      <span>{eventTimeLabel(ev)}</span>
-                      <span className="text-gray-300">·</span>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span>{eventDateLabel(ev)}</span>
+                      <span className="text-gray-300 dark:text-gray-600">·</span>
                       <span>{ev.createdByName}</span>
                     </div>
                   </li>
@@ -188,33 +180,35 @@ function DashboardContent() {
         </section>
 
         {/* 진행중인 작업 */}
-        <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-            <h2 className="font-semibold text-gray-900">진행중인 작업</h2>
+        <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">진행중인 작업</h2>
             <Link
               href="/projects"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
               전체 보기 →
             </Link>
           </div>
           <div className="px-4 py-3">
             {tasksError ? (
-              <p className="py-4 text-sm text-red-600">{tasksError}</p>
+              <p className="py-4 text-sm text-red-600 dark:text-red-400">{tasksError}</p>
             ) : tasksSectionLoading ? (
-              <p className="py-4 text-sm text-gray-400">불러오는 중...</p>
+              <p className="py-4 text-sm text-gray-400 dark:text-gray-500">
+                불러오는 중...
+              </p>
             ) : taskGroups.length === 0 ? (
-              <p className="py-4 text-sm text-gray-500">
+              <p className="py-4 text-sm text-gray-500 dark:text-gray-400">
                 진행중인 작업이 없습니다.
               </p>
             ) : (
               <div className="space-y-4">
                 {taskGroups.map((group) => (
                   <div key={group.projectId}>
-                    <h3 className="mb-1 text-sm font-semibold text-blue-700">
+                    <h3 className="mb-1 text-sm font-semibold text-blue-700 dark:text-blue-400">
                       {group.projectName}
                     </h3>
-                    <ul className="divide-y divide-gray-100">
+                    <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                       {group.tasks.map((task) => {
                         const due = task.dueDate ? task.dueDate.toDate() : null;
                         const overdue =
@@ -225,10 +219,10 @@ function DashboardContent() {
                             className="flex items-center justify-between gap-3 py-2"
                           >
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-gray-900">
+                              <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {task.title}
                               </p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {task.assigneeName ?? "담당자 없음"}
                               </p>
                             </div>
@@ -236,8 +230,8 @@ function DashboardContent() {
                               <span
                                 className={`shrink-0 text-xs ${
                                   overdue
-                                    ? "font-medium text-red-600"
-                                    : "text-gray-500"
+                                    ? "font-medium text-red-600 dark:text-red-400"
+                                    : "text-gray-500 dark:text-gray-400"
                                 }`}
                               >
                                 ~{formatDate(due)}

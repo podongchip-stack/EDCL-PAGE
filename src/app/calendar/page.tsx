@@ -7,7 +7,7 @@ import MonthGrid from "@/components/calendar/MonthGrid";
 import EventModal from "@/components/calendar/EventModal";
 import { db } from "@/lib/firebase";
 import { LabEvent } from "@/types";
-import { formatDate, formatDateTime, tsToDate } from "@/lib/dates";
+import { formatDate, isSameDay, tsToDate } from "@/lib/dates";
 
 type ModalState =
   | { type: "create"; date: Date }
@@ -51,11 +51,13 @@ function CalendarContent() {
       ? (events.find((e) => e.id === modal.eventId) ?? null)
       : null;
 
-  const now = new Date();
+  // 오늘 진행 중인 일정(종료일이 오늘 이후)까지 포함해 시작일순으로 나열
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const upcoming = events
     .filter((ev) => {
-      const start = tsToDate(ev.start);
-      return !!start && start >= now;
+      const end = tsToDate(ev.end);
+      return !!end && end >= today;
     })
     .sort((a, b) => a.start.toMillis() - b.start.toMillis());
 
@@ -73,89 +75,94 @@ function CalendarContent() {
       <h1 className="text-2xl font-bold">일정표</h1>
 
       {loadError && (
-        <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
           {loadError}
         </p>
       )}
 
-      <div className="mt-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {viewDate.getFullYear()}년 {viewDate.getMonth() + 1}월
-          </h2>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={goPrev}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-            >
-              이전
-            </button>
-            <button
-              type="button"
-              onClick={goToday}
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-            >
-              오늘
-            </button>
-            <button
-              type="button"
-              onClick={goNext}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-            >
-              다음
-            </button>
+      <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {viewDate.getFullYear()}년 {viewDate.getMonth() + 1}월
+            </h2>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={goPrev}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                이전
+              </button>
+              <button
+                type="button"
+                onClick={goToday}
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              >
+                오늘
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                다음
+              </button>
+            </div>
           </div>
+          <MonthGrid
+            year={viewDate.getFullYear()}
+            month={viewDate.getMonth()}
+            events={events}
+            onDayClick={(date) => setModal({ type: "create", date })}
+            onEventClick={(ev) => setModal({ type: "view", eventId: ev.id })}
+          />
         </div>
-        <MonthGrid
-          year={viewDate.getFullYear()}
-          month={viewDate.getMonth()}
-          events={events}
-          onDayClick={(date) => setModal({ type: "create", date })}
-          onEventClick={(ev) => setModal({ type: "view", eventId: ev.id })}
-        />
-      </div>
 
-      <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">
-          다가오는 일정
-        </h2>
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          {upcoming.length === 0 ? (
-            <p className="p-4 text-sm text-gray-500">다가오는 일정이 없습니다.</p>
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {upcoming.map((ev) => {
-                const start = tsToDate(ev.start);
-                if (!start) return null;
-                return (
-                  <li key={ev.id}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setModal({ type: "view", eventId: ev.id })
-                      }
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50"
-                    >
-                      <span className="w-40 shrink-0 text-sm text-gray-500">
-                        {ev.allDay
-                          ? `${formatDate(start)} 종일`
-                          : formatDateTime(start)}
-                      </span>
-                      <span className="flex-1 truncate text-sm font-medium text-gray-900">
-                        {ev.title}
-                      </span>
-                      <span className="shrink-0 text-xs text-gray-500">
-                        {ev.createdByName}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      </section>
+        <aside className="w-full shrink-0 lg:w-72">
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <h2 className="border-b border-gray-200 px-4 py-3 text-lg font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
+              다가오는 일정
+            </h2>
+            {upcoming.length === 0 ? (
+              <p className="p-4 text-sm text-gray-500 dark:text-gray-400">
+                다가오는 일정이 없습니다.
+              </p>
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {upcoming.map((ev) => {
+                  const start = tsToDate(ev.start);
+                  const end = tsToDate(ev.end);
+                  if (!start || !end) return null;
+                  return (
+                    <li key={ev.id}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModal({ type: "view", eventId: ev.id })
+                        }
+                        className="w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                      >
+                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                          {isSameDay(start, end)
+                            ? formatDate(start)
+                            : `${formatDate(start)} ~ ${formatDate(end)}`}
+                        </p>
+                        <p className="mt-0.5 truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {ev.title}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          {ev.createdByName}
+                        </p>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </aside>
+      </div>
 
       {modal?.type === "create" && (
         <EventModal

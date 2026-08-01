@@ -42,6 +42,10 @@ interface AuthContextValue {
   logOut: () => Promise<void>;
 }
 
+// 사용자에게 그대로 보여줘도 되는 안내 메시지를 담는 소셜 로그인 오류.
+// SDK 내부 오류의 영어 원문이 화면에 노출되는 것을 막기 위해 구분한다.
+export class SocialSignInError extends Error {}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -112,14 +116,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (snap.exists()) return;
     } catch {
       await signOut(auth);
-      throw new Error(
+      throw new SocialSignInError(
         "가입 정보 확인에 실패했습니다. 네트워크 상태를 확인한 뒤 다시 로그인해주세요."
       );
     }
     if (!u.email) {
       // 보안 규칙이 email == Auth 토큰 이메일을 요구하므로 이메일 없이는 가입 불가
       await signOut(auth);
-      throw new Error(
+      throw new SocialSignInError(
         "소셜 계정에서 이메일을 가져올 수 없습니다. GitHub 이메일 공개 설정을 확인하거나 다른 방법으로 가입해주세요."
       );
     }
@@ -133,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch {
       await signOut(auth);
-      throw new Error(
+      throw new SocialSignInError(
         "가입 신청 저장에 실패했습니다. 네트워크 상태를 확인한 뒤 다시 로그인해주세요."
       );
     }

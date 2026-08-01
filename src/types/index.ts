@@ -14,13 +14,13 @@ export interface UserProfile {
 }
 
 // Firestore: events/{eventId}
+// 일정은 날짜 단위로만 관리한다 (start: 시작일 00:00, end: 종료일 23:59:59)
 export interface LabEvent {
   id: string;
   title: string;
   description: string;
   start: Timestamp;
   end: Timestamp;
-  allDay: boolean;
   createdBy: string;
   createdByName: string;
   createdAt: Timestamp | null;

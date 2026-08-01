@@ -128,7 +128,7 @@ function AdminContent() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-bold">관리자</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
         가입 승인과 구성원 역할을 관리합니다.
       </p>
 
@@ -136,8 +136,8 @@ function AdminContent() {
         <div
           className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
             feedback.type === "success"
-              ? "border-green-200 bg-green-50 text-green-700"
-              : "border-red-200 bg-red-50 text-red-700"
+              ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-400"
+              : "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400"
           }`}
         >
           {feedback.text}
@@ -145,7 +145,7 @@ function AdminContent() {
       )}
 
       {loadError && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
           {loadError}
         </div>
       )}
@@ -154,28 +154,30 @@ function AdminContent() {
       <section className="mt-6">
         <h2 className="text-lg font-semibold">
           승인 대기{" "}
-          <span className="text-sm font-normal text-gray-500">
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
             {pendingUsers.length}명
           </span>
         </h2>
         <div className="mt-3 space-y-3">
           {loadingUsers ? (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               불러오는 중...
             </div>
           ) : pendingUsers.length === 0 ? (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               승인 대기 중인 신청이 없습니다.
             </div>
           ) : (
             pendingUsers.map((u) => (
               <div
                 key={u.uid}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900"
               >
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900">{u.name}</p>
-                  <p className="truncate text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {u.name}
+                  </p>
+                  <p className="truncate text-sm text-gray-500 dark:text-gray-400">
                     {u.email} · 가입일 {joinedAtText(u)}
                   </p>
                 </div>
@@ -192,7 +194,7 @@ function AdminContent() {
                       <button
                         onClick={() => setConfirmUid(null)}
                         disabled={busyUid === u.uid}
-                        className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
+                        className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                       >
                         취소
                       </button>
@@ -209,7 +211,7 @@ function AdminContent() {
                       <button
                         onClick={() => setConfirmUid(u.uid)}
                         disabled={busyUid === u.uid}
-                        className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                        className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
                       >
                         거절
                       </button>
@@ -226,15 +228,15 @@ function AdminContent() {
       <section className="mt-8">
         <h2 className="text-lg font-semibold">
           구성원{" "}
-          <span className="text-sm font-normal text-gray-500">
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
             {approvedUsers.length}명
           </span>
         </h2>
-        <div className="mt-3 rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="mt-3 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-gray-500">
+                <tr className="border-b border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400">
                   <th className="px-4 py-3 font-medium">이름</th>
                   <th className="px-4 py-3 font-medium">이메일</th>
                   <th className="px-4 py-3 font-medium">역할</th>
@@ -245,13 +247,13 @@ function AdminContent() {
               <tbody>
                 {loadingUsers ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                    <td colSpan={5} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                       불러오는 중...
                     </td>
                   </tr>
                 ) : approvedUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                    <td colSpan={5} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                       구성원이 없습니다.
                     </td>
                   </tr>
@@ -261,19 +263,21 @@ function AdminContent() {
                     return (
                       <tr
                         key={u.uid}
-                        className="border-b border-gray-100 last:border-b-0"
+                        className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
                       >
-                        <td className="px-4 py-3 font-medium text-gray-900">
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
                           <span className="flex items-center gap-2">
                             {u.name}
                             {isSelf && (
-                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                                 본인
                               </span>
                             )}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                          {u.email}
+                        </td>
                         <td className="px-4 py-3">
                           <select
                             value={u.role}
@@ -281,13 +285,13 @@ function AdminContent() {
                               changeRole(u, e.target.value as UserRole)
                             }
                             disabled={isSelf || busyUid === u.uid}
-                            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
                           >
                             <option value="member">{ROLE_LABELS.member}</option>
                             <option value="admin">{ROLE_LABELS.admin}</option>
                           </select>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                           {joinedAtText(u)}
                         </td>
                         <td className="px-4 py-3">
@@ -303,7 +307,7 @@ function AdminContent() {
                               <button
                                 onClick={() => setConfirmUid(null)}
                                 disabled={busyUid === u.uid}
-                                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50"
+                                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                               >
                                 취소
                               </button>
@@ -312,7 +316,7 @@ function AdminContent() {
                             <button
                               onClick={() => setConfirmUid(u.uid)}
                               disabled={isSelf || busyUid === u.uid}
-                              className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-300 disabled:hover:bg-white"
+                              className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-300 disabled:hover:bg-white dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40 dark:disabled:border-gray-800 dark:disabled:text-gray-600 dark:disabled:hover:bg-gray-900"
                             >
                               삭제
                             </button>
@@ -328,7 +332,7 @@ function AdminContent() {
         </div>
       </section>
 
-      <p className="mt-6 text-xs text-gray-500">
+      <p className="mt-6 text-xs text-gray-500 dark:text-gray-400">
         거절/삭제는 구성원 정보(users 문서)만 삭제합니다. 로그인 계정(Firebase
         Auth)은 Firebase Console &gt; Authentication에서 별도로 삭제하세요.
       </p>
