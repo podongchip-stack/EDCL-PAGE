@@ -9,6 +9,10 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import AuthGuard from "@/components/AuthGuard";
+import BookableItemManager from "@/components/admin/BookableItemManager";
+import DataExport from "@/components/admin/DataExport";
+import LabInfoEditor from "@/components/admin/LabInfoEditor";
+import RotationManager from "@/components/admin/RotationManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { formatDate, tsToDate } from "@/lib/dates";
@@ -90,6 +94,8 @@ function AdminContent() {
     setFeedback(null);
     try {
       await deleteDoc(doc(db, "users", target.uid));
+      // 공개 구성원 페이지에 남지 않도록 공개 프로필도 함께 정리한다
+      await deleteDoc(doc(db, "publicProfiles", target.uid));
       setFeedback({
         type: "success",
         text: `${target.name} 님을 ${actionLabel}했습니다.`,
@@ -336,6 +342,11 @@ function AdminContent() {
         거절/삭제는 구성원 정보(users 문서)만 삭제합니다. 로그인 계정(Firebase
         Auth)은 Firebase Console &gt; Authentication에서 별도로 삭제하세요.
       </p>
+
+      <LabInfoEditor />
+      <RotationManager />
+      <BookableItemManager />
+      <DataExport />
     </div>
   );
 }

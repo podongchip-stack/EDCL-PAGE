@@ -64,14 +64,16 @@ export interface ResourceLink {
   createdAt: Timestamp | null;
 }
 
-export type ProjectStatus = "active" | "archived";
+export type ProjectStatus = "active" | "archived" | "deleted";
 
 // Firestore: projects/{projectId}
+// status "deleted"는 휴지통 상태 — 복원 전까지 목록에서 숨기고 영구 삭제로만 제거한다
 export interface Project {
   id: string;
   name: string;
   description: string;
   status: ProjectStatus;
+  deletedAt?: Timestamp | null;
   createdBy: string;
   createdAt: Timestamp | null;
 }
@@ -94,5 +96,68 @@ export interface Task {
   assigneeName: string | null;
   dueDate: Timestamp | null;
   createdBy: string;
+  createdAt: Timestamp | null;
+}
+
+// Firestore: publications/{pubId} — 공개 논문/출판물 목록
+export interface Publication {
+  id: string;
+  title: string;
+  authors: string;
+  venue: string;
+  year: number;
+  link: string;
+  createdBy: string;
+  createdAt: Timestamp | null;
+}
+
+// Firestore: publicProfiles/{uid} — 공개 구성원 프로필 (본인이 설정에서 관리)
+export interface PublicProfile {
+  uid: string;
+  name: string;
+  position: string; // 예: 석사과정, 박사과정, 지도교수
+  interests: string; // 연구 분야
+  visible: boolean;
+  updatedAt: Timestamp | null;
+}
+
+// Firestore: siteContent/labInfo — 공개 랜딩 페이지 소개 문구 (관리자 편집)
+export interface LabInfo {
+  intro: string;
+  professor: string;
+  contact: string;
+}
+
+// Firestore: bookableItems/{itemId} — 예약 가능한 회의실/장비 (관리자 관리)
+export interface BookableItem {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: Timestamp | null;
+}
+
+// Firestore: bookings/{bookingId} — 시간대 예약
+// date는 "YYYY-MM-DD", startMin/endMin은 0~1440 분 단위 (예: 09:30 = 570)
+export interface Booking {
+  id: string;
+  itemId: string;
+  itemName: string;
+  date: string;
+  startMin: number;
+  endMin: number;
+  purpose: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Timestamp | null;
+}
+
+// Firestore: rotations/{rotationId} — 세미나 발표/당번 순번 (관리자 관리)
+// anchorDate("YYYY-MM-DD")가 속한 주가 members[0] 담당, 이후 intervalWeeks 주기로 순환
+export interface Rotation {
+  id: string;
+  title: string;
+  members: string[];
+  anchorDate: string;
+  intervalWeeks: number;
   createdAt: Timestamp | null;
 }

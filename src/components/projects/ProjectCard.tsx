@@ -8,10 +8,10 @@ import {
   serverTimestamp,
   Timestamp,
   updateDoc,
-  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Project, Task, TaskStatus, UserProfile } from "@/types";
+import KanbanBoard from "@/components/projects/KanbanBoard";
 import TaskItem from "@/components/projects/TaskItem";
 
 const STATUS_ORDER: Record<TaskStatus, number> = {
@@ -39,6 +39,7 @@ export default function ProjectCard({
   currentUid,
   isAdmin,
 }: ProjectCardProps) {
+  const [taskView, setTaskView] = useState<"list" | "board">("list");
   const [showAddForm, setShowAddForm] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
   const [assigneeUid, setAssigneeUid] = useState("");
@@ -120,16 +121,18 @@ export default function ProjectCard({
     }
   };
 
-  const deleteProject = async () => {
+  // 즉시 삭제하지 않고 휴지통(status: deleted)으로 보낸다.
+  // 복원·영구 삭제는 프로젝트 페이지의 휴지통 섹션에서 처리한다.
+  const moveToTrash = async () => {
     setDeleting(true);
     setActionError("");
     try {
-      const batch = writeBatch(db);
-      tasks.forEach((t) => batch.delete(doc(db, "tasks", t.id)));
-      batch.delete(doc(db, "projects", project.id));
-      await batch.commit();
+      await updateDoc(doc(db, "projects", project.id), {
+        status: "deleted",
+        deletedAt: serverTimestamp(),
+      });
     } catch {
-      setActionError("프로젝트 삭제에 실패했습니다.");
+      setActionError("휴지통 이동에 실패했습니다.");
       setDeleting(false);
       setConfirmingDelete(false);
     }
@@ -161,15 +164,15 @@ export default function ProjectCard({
             {confirmingDelete ? (
               <>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  작업 {totalCount}개 포함 삭제됩니다
+                  작업 {totalCount}개와 함께 휴지통으로 이동합니다
                 </span>
                 <button
                   type="button"
-                  onClick={deleteProject}
+                  onClick={moveToTrash}
                   disabled={deleting}
                   className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
-                  정말 삭제
+                  휴지통으로
                 </button>
                 <button
                   type="button"
@@ -224,16 +227,42 @@ export default function ProjectCard({
         </div>
       </div>
 
-      {sortedTasks.length > 0 ? (
-        <ul className="mt-4 space-y-2">
+      {sortedTasks.length > 0 && (
+        <div className="mt-4 flex items-center gap-1">
+          {(
+            [
+              { value: "list", label: "목록" },
+              { value: "board", label: "보드" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setTaskView(opt.value)}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                taskView === opt.value
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                  : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {sortedTasks.length === 0 ? (
+        <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">
+          등록된 작업이 없습니다.
+        </p>
+      ) : taskView === "board" ? (
+        <KanbanBoard tasks={sortedTasks} />
+      ) : (
+        <ul className="mt-3 space-y-2">
           {sortedTasks.map((t) => (
             <TaskItem key={t.id} task={t} approvedUsers={approvedUsers} />
           ))}
         </ul>
-      ) : (
-        <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">
-          등록된 작업이 없습니다.
-        </p>
       )}
 
       {showAddForm ? (

@@ -2,7 +2,8 @@
 
 import { LabEvent } from "@/types";
 import { eventCategoryStyle } from "@/lib/eventCategories";
-import { WEEKDAY_LABELS, isSameDay, tsToDate } from "@/lib/dates";
+import { eventsOnDay } from "@/lib/events";
+import { WEEKDAY_LABELS, isSameDay } from "@/lib/dates";
 
 const MAX_CHIPS = 3;
 
@@ -12,28 +13,6 @@ interface MonthGridProps {
   events: LabEvent[];
   onDayClick: (date: Date) => void;
   onEventClick: (event: LabEvent) => void;
-}
-
-// 해당 날짜(시작~종료 구간에 걸친)의 일정을 시작일순으로 반환
-function eventsForDay(events: LabEvent[], day: Date): LabEvent[] {
-  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-  const dayEnd = new Date(
-    day.getFullYear(),
-    day.getMonth(),
-    day.getDate(),
-    23,
-    59,
-    59,
-    999
-  );
-  return events
-    .filter((ev) => {
-      const start = tsToDate(ev.start);
-      const end = tsToDate(ev.end);
-      if (!start || !end) return false;
-      return start <= dayEnd && end >= dayStart;
-    })
-    .sort((a, b) => a.start.toMillis() - b.start.toMillis());
 }
 
 export default function MonthGrid({
@@ -80,7 +59,7 @@ export default function MonthGrid({
         {cells.map((day) => {
           const inMonth = day.getMonth() === month;
           const isToday = isSameDay(day, today);
-          const dayEvents = eventsForDay(events, day);
+          const dayEvents = eventsOnDay(events, day);
           const visible = dayEvents.slice(0, MAX_CHIPS);
           const overflow = dayEvents.length - visible.length;
 

@@ -4,13 +4,17 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   addDoc,
   collection,
+  doc,
   onSnapshot,
   serverTimestamp,
+  updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import AuthGuard from "@/components/AuthGuard";
 import ProjectCard from "@/components/projects/ProjectCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
+import { formatDate, tsToDate } from "@/lib/dates";
 import { Project, Task, UserProfile } from "@/types";
 
 function projectMillis(p: Project): number {
@@ -30,6 +34,10 @@ function ProjectsContent() {
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
+  const [trashBusyId, setTrashBusyId] = useState<string | null>(null);
+  const [trashConfirmId, setTrashConfirmId] = useState<string | null>(null);
+  const [trashError, setTrashError] = useState("");
 
   useEffect(() => {
     const onError = () =>
@@ -77,7 +85,43 @@ function ProjectsContent() {
   const archivedProjects = projects
     .filter((p) => p.status === "archived")
     .sort((a, b) => projectMillis(b) - projectMillis(a));
+  const deletedProjects = projects
+    .filter((p) => p.status === "deleted")
+    .sort((a, b) => projectMillis(b) - projectMillis(a));
   const isAdmin = profile?.role === "admin";
+
+  const restoreProject = async (p: Project) => {
+    setTrashBusyId(p.id);
+    setTrashError("");
+    try {
+      await updateDoc(doc(db, "projects", p.id), {
+        status: "active",
+        deletedAt: null,
+      });
+    } catch {
+      setTrashError("복원에 실패했습니다.");
+    } finally {
+      setTrashBusyId(null);
+    }
+  };
+
+  const purgeProject = async (p: Project) => {
+    setTrashBusyId(p.id);
+    setTrashError("");
+    try {
+      const batch = writeBatch(db);
+      tasks
+        .filter((t) => t.projectId === p.id)
+        .forEach((t) => batch.delete(doc(db, "tasks", t.id)));
+      batch.delete(doc(db, "projects", p.id));
+      await batch.commit();
+    } catch {
+      setTrashError("영구 삭제에 실패했습니다.");
+    } finally {
+      setTrashBusyId(null);
+      setTrashConfirmId(null);
+    }
+  };
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -257,6 +301,95 @@ function ProjectsContent() {
           </div>
         )}
       </div>
+
+      {deletedProjects.length > 0 && (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setShowTrash((v) => !v)}
+            className="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            {showTrash
+              ? "휴지통 숨기기"
+              : `휴지통 보기 (${deletedProjects.length})`}
+          </button>
+          {showTrash && (
+            <div className="mt-3 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              {trashError && (
+                <p className="border-b border-gray-100 px-4 py-2 text-sm text-red-600 dark:border-gray-800 dark:text-red-400">
+                  {trashError}
+                </p>
+              )}
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {deletedProjects.map((p) => {
+                  const canManage = isAdmin || p.createdBy === user.uid;
+                  const taskCount = tasks.filter(
+                    (t) => t.projectId === p.id
+                  ).length;
+                  const deleted = tsToDate(p.deletedAt ?? null);
+                  return (
+                    <li
+                      key={p.id}
+                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {p.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          작업 {taskCount}개
+                          {deleted && ` · ${formatDate(deleted)} 삭제`}
+                        </p>
+                      </div>
+                      {canManage && (
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => restoreProject(p)}
+                            disabled={trashBusyId === p.id}
+                            className="rounded-md border border-gray-300 px-2.5 py-1 text-xs text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                          >
+                            복원
+                          </button>
+                          {trashConfirmId === p.id ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => purgeProject(p)}
+                                disabled={trashBusyId === p.id}
+                                className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                              >
+                                되돌릴 수 없음, 영구 삭제
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setTrashConfirmId(null)}
+                                disabled={trashBusyId === p.id}
+                                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                              >
+                                취소
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setTrashConfirmId(p.id)}
+                              disabled={trashBusyId === p.id}
+                              className="rounded-md border border-red-300 px-2.5 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                            >
+                              영구 삭제
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

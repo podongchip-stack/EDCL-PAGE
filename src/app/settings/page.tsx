@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { updateProfile } from "firebase/auth";
 import {
   collection,
   doc,
   DocumentReference,
+  getDoc,
   getDocs,
   query,
+  serverTimestamp,
+  setDoc,
   updateDoc,
   where,
   writeBatch,
@@ -22,14 +26,20 @@ import { auth, db } from "@/lib/firebase";
 async function propagateName(uid: string, name: string, isAdmin: boolean) {
   const updates: { ref: DocumentReference; data: Record<string, string> }[] =
     [];
-  const [taskSnap, eventSnap, resourceSnap, noticeSnap] = await Promise.all([
-    getDocs(query(collection(db, "tasks"), where("assigneeUid", "==", uid))),
-    getDocs(query(collection(db, "events"), where("createdBy", "==", uid))),
-    getDocs(query(collection(db, "resources"), where("createdBy", "==", uid))),
-    isAdmin
-      ? getDocs(query(collection(db, "notices"), where("createdBy", "==", uid)))
-      : Promise.resolve(null),
-  ]);
+  const [taskSnap, eventSnap, resourceSnap, bookingSnap, noticeSnap] =
+    await Promise.all([
+      getDocs(query(collection(db, "tasks"), where("assigneeUid", "==", uid))),
+      getDocs(query(collection(db, "events"), where("createdBy", "==", uid))),
+      getDocs(
+        query(collection(db, "resources"), where("createdBy", "==", uid))
+      ),
+      getDocs(query(collection(db, "bookings"), where("createdBy", "==", uid))),
+      isAdmin
+        ? getDocs(
+            query(collection(db, "notices"), where("createdBy", "==", uid))
+          )
+        : Promise.resolve(null),
+    ]);
   taskSnap.forEach((d) =>
     updates.push({ ref: d.ref, data: { assigneeName: name } })
   );
@@ -37,6 +47,9 @@ async function propagateName(uid: string, name: string, isAdmin: boolean) {
     updates.push({ ref: d.ref, data: { createdByName: name } })
   );
   resourceSnap.forEach((d) =>
+    updates.push({ ref: d.ref, data: { createdByName: name } })
+  );
+  bookingSnap.forEach((d) =>
     updates.push({ ref: d.ref, data: { createdByName: name } })
   );
   noticeSnap?.forEach((d) =>
@@ -49,6 +62,12 @@ async function propagateName(uid: string, name: string, isAdmin: boolean) {
       batch.update(u.ref, u.data);
     }
     await batch.commit();
+  }
+  // 공개 프로필이 있으면 이름도 맞춰준다 (없으면 무시)
+  try {
+    await updateDoc(doc(db, "publicProfiles", uid), { name });
+  } catch {
+    // 공개 프로필 미등록 상태 — 갱신할 것이 없다
   }
 }
 
@@ -82,6 +101,61 @@ function SettingsContent() {
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+
+  const [profileVisible, setProfileVisible] = useState(false);
+  const [position, setPosition] = useState("");
+  const [interests, setInterests] = useState("");
+  const [savingPublic, setSavingPublic] = useState(false);
+  const [publicMsg, setPublicMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    getDoc(doc(db, "publicProfiles", user.uid))
+      .then((snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          setProfileVisible(data.visible === true);
+          setPosition(typeof data.position === "string" ? data.position : "");
+          setInterests(
+            typeof data.interests === "string" ? data.interests : ""
+          );
+        }
+      })
+      .catch(() => {
+        // 아직 등록 전이거나 일시 오류 — 기본값 유지
+      });
+  }, [user]);
+
+  const savePublicProfile = async () => {
+    if (!user || !profile || savingPublic) return;
+    setSavingPublic(true);
+    setPublicMsg(null);
+    try {
+      await setDoc(doc(db, "publicProfiles", user.uid), {
+        name: profile.name,
+        position: position.trim(),
+        interests: interests.trim(),
+        visible: profileVisible,
+        updatedAt: serverTimestamp(),
+      });
+      setPublicMsg({
+        type: "success",
+        text: profileVisible
+          ? "저장했습니다. 구성원 페이지에 공개됩니다."
+          : "저장했습니다. 구성원 페이지에는 표시되지 않습니다.",
+      });
+    } catch {
+      setPublicMsg({
+        type: "error",
+        text: "저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      });
+    } finally {
+      setSavingPublic(false);
+    }
+  };
 
   const startNameEdit = () => {
     setNameInput(profile?.name ?? "");
@@ -247,6 +321,94 @@ function SettingsContent() {
             </dd>
           </div>
         </dl>
+      </section>
+
+      <section className="mt-6 rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+          <div>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">
+              공개 프로필
+            </h2>
+            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+              공개를 켜면 로그인 없이 볼 수 있는 구성원 페이지에 표시됩니다.
+            </p>
+          </div>
+          <Link
+            href="/members"
+            className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            페이지 보기 →
+          </Link>
+        </div>
+        <div className="space-y-4 p-5">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={profileVisible}
+              onChange={(e) => setProfileVisible(e.target.checked)}
+              disabled={savingPublic}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            구성원 페이지에 내 프로필 공개
+          </label>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="profile-position"
+                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                직책/과정
+              </label>
+              <input
+                id="profile-position"
+                type="text"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                disabled={savingPublic}
+                placeholder="예: 석사과정"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="profile-interests"
+                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                연구 분야
+              </label>
+              <input
+                id="profile-interests"
+                type="text"
+                value={interests}
+                onChange={(e) => setInterests(e.target.value)}
+                disabled={savingPublic}
+                placeholder="예: 교육공학, AI 리터러시"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+              />
+            </div>
+          </div>
+          {publicMsg && (
+            <p
+              className={`text-sm ${
+                publicMsg.type === "success"
+                  ? "text-green-700 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {publicMsg.text}
+            </p>
+          )}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={savePublicProfile}
+              disabled={savingPublic}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingPublic ? "저장 중..." : "저장"}
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   );

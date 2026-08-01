@@ -2,10 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { collection, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AuthGuard from "@/components/AuthGuard";
 import NoticeBoard from "@/components/NoticeBoard";
+import PublicHome from "@/components/PublicHome";
+import RotationCard from "@/components/RotationCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { LabEvent, Project, Task, TASK_STATUS_LABELS } from "@/types";
 import { eventCategoryStyle } from "@/lib/eventCategories";
@@ -37,9 +45,15 @@ function DashboardContent() {
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [tasksError, setTasksError] = useState<string | null>(null);
 
+  // 지난 일정은 대시보드에 필요 없으므로 오늘 이후 종료되는 일정만 구독한다
   useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const unsubscribe = onSnapshot(
-      collection(db, "events"),
+      query(
+        collection(db, "events"),
+        where("end", ">=", Timestamp.fromDate(today))
+      ),
       (snap) => {
         setEvents(
           snap.docs.map((d) => ({ id: d.id, ...d.data() }) as LabEvent)
@@ -55,9 +69,13 @@ function DashboardContent() {
     return unsubscribe;
   }, []);
 
+  // 완료된 작업은 대시보드에 표시하지 않으므로 미완료 작업만 구독한다
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, "tasks"),
+      query(
+        collection(db, "tasks"),
+        where("status", "in", ["todo", "in_progress"])
+      ),
       (snap) => {
         setTasks(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Task));
         setTasksError(null);
@@ -97,11 +115,21 @@ function DashboardContent() {
     .sort((a, b) => a.start.toDate().getTime() - b.start.toDate().getTime())
     .slice(0, 5);
 
+  // 휴지통(deleted) 프로젝트의 작업은 대시보드에서 제외한다
+  const liveProjectIds = new Set(
+    projects.filter((p) => p.status !== "deleted").map((p) => p.id)
+  );
+
   // 내가 담당자인 미완료 작업 (마감일 빠른 순, 마감일 없으면 뒤로)
   const projectNameById = new Map(projects.map((p) => [p.id, p.name]));
   const myTasks = user
     ? tasks
-        .filter((t) => t.assigneeUid === user.uid && t.status !== "done")
+        .filter(
+          (t) =>
+            t.assigneeUid === user.uid &&
+            t.status !== "done" &&
+            liveProjectIds.has(t.projectId)
+        )
         .sort((a, b) => {
           const ad = a.dueDate ? a.dueDate.toMillis() : Infinity;
           const bd = b.dueDate ? b.dueDate.toMillis() : Infinity;
@@ -111,7 +139,12 @@ function DashboardContent() {
     : [];
 
   const taskGroups = useMemo(() => {
-    const inProgress = tasks.filter((t) => t.status === "in_progress");
+    const live = new Set(
+      projects.filter((p) => p.status !== "deleted").map((p) => p.id)
+    );
+    const inProgress = tasks.filter(
+      (t) => t.status === "in_progress" && live.has(t.projectId)
+    );
     const nameById = new Map(projects.map((p) => [p.id, p.name]));
     const byProject = new Map<string, Task[]>();
     for (const task of inProgress) {
@@ -148,6 +181,8 @@ function DashboardContent() {
       </div>
 
       <NoticeBoard />
+
+      <RotationCard />
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* 내 작업 */}
@@ -342,6 +377,19 @@ function DashboardContent() {
 }
 
 export default function Home() {
+  const { user, loading } = useAuth();
+
+  // 로그아웃 상태에서는 공개 소개 페이지, 로그인 상태에서는 대시보드를 보여준다
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 dark:border-blue-950 dark:border-t-blue-500" />
+      </div>
+    );
+  }
+  if (!user) {
+    return <PublicHome />;
+  }
   return (
     <AuthGuard>
       <DashboardContent />
