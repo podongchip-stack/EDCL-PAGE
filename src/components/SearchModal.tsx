@@ -105,7 +105,7 @@ export default function SearchModal({ onClose }: SearchModalProps) {
                   id: ev.id,
                   title: ev.title,
                   detail: start ? formatDate(start) : "",
-                  onSelect: () => go("/calendar"),
+                  onSelect: () => go(`/calendar?event=${ev.id}`),
                 };
               }),
           },
@@ -119,7 +119,7 @@ export default function SearchModal({ onClose }: SearchModalProps) {
                 id: p.id,
                 title: p.name,
                 detail: p.status === "archived" ? "보관됨" : "진행 중",
-                onSelect: () => go("/projects"),
+                onSelect: () => go(`/projects?project=${p.id}`),
               })),
           },
           {
@@ -132,7 +132,7 @@ export default function SearchModal({ onClose }: SearchModalProps) {
                 id: t.id,
                 title: t.title,
                 detail: t.assigneeName ?? "담당자 없음",
-                onSelect: () => go("/projects"),
+                onSelect: () => go(`/projects?project=${t.projectId}`),
               })),
           },
           {
@@ -145,7 +145,7 @@ export default function SearchModal({ onClose }: SearchModalProps) {
                 id: n.id,
                 title: n.title,
                 detail: n.createdByName,
-                onSelect: () => go("/"),
+                onSelect: () => go(`/?notice=${n.id}`),
               })),
           },
           {

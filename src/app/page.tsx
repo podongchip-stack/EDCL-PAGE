@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   collection,
   onSnapshot,
@@ -35,6 +36,8 @@ function eventDateLabel(ev: LabEvent): string {
 
 function DashboardContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const initialNoticeId = searchParams.get("notice");
   const [events, setEvents] = useState<LabEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
@@ -180,7 +183,7 @@ function DashboardContent() {
         </p>
       </div>
 
-      <NoticeBoard />
+      <NoticeBoard initialNoticeId={initialNoticeId} />
 
       <RotationCard />
 
@@ -392,7 +395,10 @@ export default function Home() {
   }
   return (
     <AuthGuard>
-      <DashboardContent />
+      {/* useSearchParams 사용 컴포넌트는 Suspense 경계가 필요하다 */}
+      <Suspense fallback={null}>
+        <DashboardContent />
+      </Suspense>
     </AuthGuard>
   );
 }

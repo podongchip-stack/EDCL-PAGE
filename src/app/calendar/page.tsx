@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -37,6 +40,8 @@ function addDays(d: Date, days: number): Date {
 }
 
 function CalendarContent() {
+  const searchParams = useSearchParams();
+  const deepLinkEventId = searchParams.get("event");
   const [view, setView] = useState<"month" | "week">("month");
   // month 뷰에서는 그 달 1일, week 뷰에서는 주 시작(일요일)을 가리킨다
   const [viewDate, setViewDate] = useState(() => {
@@ -49,6 +54,32 @@ function CalendarContent() {
   const [rawModal, setModal] = useState<ModalState>(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [deepLinkEvent, setDeepLinkEvent] = useState<LabEvent | null>(null);
+  // 같은 페이지에서 연속으로 다른 일정을 검색해도 동작하도록 id 단위로 처리를 기억한다
+  const [deepLinkHandledId, setDeepLinkHandledId] = useState<string | null>(
+    null
+  );
+
+  // 검색 결과에서 ?event=<id>로 진입하면 해당 일정의 달로 이동해 상세를 연다
+  useEffect(() => {
+    if (!deepLinkEventId || deepLinkHandledId === deepLinkEventId) return;
+    setDeepLinkHandledId(deepLinkEventId);
+    getDoc(doc(db, "events", deepLinkEventId))
+      .then((snap) => {
+        if (!snap.exists()) return;
+        const ev = { id: snap.id, ...snap.data() } as LabEvent;
+        setDeepLinkEvent(ev);
+        const start = tsToDate(ev.start);
+        if (start) {
+          setView("month");
+          setViewDate(new Date(start.getFullYear(), start.getMonth(), 1));
+        }
+        setModal({ type: "view", eventId: ev.id });
+      })
+      .catch(() => {
+        // 삭제됐거나 접근 불가 — 달력만 보여준다
+      });
+  }, [deepLinkEventId, deepLinkHandledId]);
 
   // 표시 범위 (rangeEnd는 exclusive)
   const rangeStart =
@@ -105,9 +136,20 @@ function CalendarContent() {
     return unsubscribe;
   }, []);
 
+  // 딥링크 일정이 라이브 구독에 나타나면 임시 사본을 폐기한다
+  // (삭제·수정이 즉시 반영되도록 — 사본이 남으면 유령 일정이 된다)
+  useEffect(() => {
+    if (!deepLinkEvent) return;
+    const inLive =
+      events.some((e) => e.id === deepLinkEvent.id) ||
+      upcomingEvents.some((e) => e.id === deepLinkEvent.id);
+    if (inLive) setDeepLinkEvent(null);
+  }, [events, upcomingEvents, deepLinkEvent]);
+
   // 두 구독을 합친다 — 60일보다 앞서 시작한 진행 중 장기 일정도
   // upcoming 구독(end>=오늘)에 잡히므로, 그리드에도 병합 결과를 넘긴다
   const eventById = new Map<string, LabEvent>();
+  if (deepLinkEvent) eventById.set(deepLinkEvent.id, deepLinkEvent);
   for (const ev of events) eventById.set(ev.id, ev);
   for (const ev of upcomingEvents) eventById.set(ev.id, ev);
   const mergedEvents = Array.from(eventById.values());
@@ -365,7 +407,10 @@ function CalendarContent() {
 export default function CalendarPage() {
   return (
     <AuthGuard>
-      <CalendarContent />
+      {/* useSearchParams 사용 컴포넌트는 Suspense 경계가 필요하다 */}
+      <Suspense fallback={null}>
+        <CalendarContent />
+      </Suspense>
     </AuthGuard>
   );
 }

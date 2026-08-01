@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   addDoc,
   collection,
@@ -23,6 +24,10 @@ function projectMillis(p: Project): number {
 
 function ProjectsContent() {
   const { user, profile } = useAuth();
+  const searchParams = useSearchParams();
+  const focusId = searchParams.get("project");
+  // 같은 페이지에서 연속 검색해도 동작하도록 id 단위로 처리를 기억한다
+  const [focusHandledId, setFocusHandledId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -38,6 +43,22 @@ function ProjectsContent() {
   const [trashBusyId, setTrashBusyId] = useState<string | null>(null);
   const [trashConfirmId, setTrashConfirmId] = useState<string | null>(null);
   const [trashError, setTrashError] = useState("");
+
+  // 검색 딥링크(?project=<id>)로 진입하면 해당 프로젝트 카드로 스크롤한다
+  useEffect(() => {
+    if (!focusId || focusHandledId === focusId || projects.length === 0)
+      return;
+    const target = projects.find((p) => p.id === focusId);
+    if (!target) return;
+    setFocusHandledId(focusId);
+    if (target.status === "archived") setShowArchived(true);
+    if (target.status === "deleted") setShowTrash(true);
+    setTimeout(() => {
+      document
+        .getElementById(`project-${focusId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  }, [focusId, focusHandledId, projects]);
 
   useEffect(() => {
     const onError = () =>
@@ -397,7 +418,10 @@ function ProjectsContent() {
 export default function ProjectsPage() {
   return (
     <AuthGuard>
-      <ProjectsContent />
+      {/* useSearchParams 사용 컴포넌트는 Suspense 경계가 필요하다 */}
+      <Suspense fallback={null}>
+        <ProjectsContent />
+      </Suspense>
     </AuthGuard>
   );
 }

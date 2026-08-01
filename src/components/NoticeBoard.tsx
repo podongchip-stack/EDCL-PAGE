@@ -22,14 +22,26 @@ function noticeMillis(n: Notice): number {
   return n.createdAt ? n.createdAt.toMillis() : Number.MAX_SAFE_INTEGER;
 }
 
-export default function NoticeBoard() {
+interface NoticeBoardProps {
+  // 검색 딥링크(?notice=<id>)로 진입 시 해당 공지를 펼쳐서 보여준다
+  initialNoticeId?: string | null;
+}
+
+export default function NoticeBoard({ initialNoticeId }: NoticeBoardProps) {
   const { user, profile } = useAuth();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(
+    initialNoticeId ?? null
+  );
   const [showAll, setShowAll] = useState(false);
+
+  // 이미 대시보드에 있는 상태에서 검색 딥링크로 파라미터만 바뀌어도 펼쳐지도록
+  useEffect(() => {
+    if (initialNoticeId) setExpandedId(initialNoticeId);
+  }, [initialNoticeId]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -63,6 +75,17 @@ export default function NoticeBoard() {
   });
   const visible = showAll ? sorted : sorted.slice(0, MAX_VISIBLE);
   const hiddenCount = sorted.length - MAX_VISIBLE;
+
+  // 딥링크된 공지가 상위 5개 밖에 있으면 전체 보기로 펼친다
+  useEffect(() => {
+    if (!initialNoticeId || notices.length === 0) return;
+    const ordered = [...notices].sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return noticeMillis(b) - noticeMillis(a);
+    });
+    const idx = ordered.findIndex((n) => n.id === initialNoticeId);
+    if (idx >= MAX_VISIBLE) setShowAll(true);
+  }, [notices, initialNoticeId]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();

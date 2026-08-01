@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { doc, onSnapshot } from "firebase/firestore";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { LabInfo } from "@/types";
+import { LabInfo, Publication } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { publicStrings } from "@/lib/publicStrings";
+
+function pubMillis(p: Publication): number {
+  return p.createdAt ? p.createdAt.toMillis() : Number.MAX_SAFE_INTEGER;
+}
 
 export default function PublicHome() {
   const { lang } = useLanguage();
   const t = publicStrings(lang).home;
   const [info, setInfo] = useState<LabInfo | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [pubs, setPubs] = useState<Publication[]>([]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -25,6 +30,17 @@ export default function PublicHome() {
     );
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "publications"), (snap) => {
+      setPubs(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Publication));
+    });
+    return unsubscribe;
+  }, []);
+
+  const recentPubs = [...pubs]
+    .sort((a, b) => (a.year === b.year ? pubMillis(b) - pubMillis(a) : b.year - a.year))
+    .slice(0, 3);
 
   // EN 모드에서 영문 필드가 있으면 사용하고, 없으면 국문 → 기본 문구 순으로 폴백
   const intro =
@@ -88,6 +104,46 @@ export default function PublicHome() {
           <p className="mt-4 whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
             {research}
           </p>
+        </section>
+      )}
+
+      {recentPubs.length > 0 && (
+        <section className="mx-auto mt-8 max-w-3xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {t.recentPubs}
+            </h2>
+            <Link
+              href="/publications"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              {t.viewAllPubs}
+            </Link>
+          </div>
+          <ul className="mt-4 space-y-3">
+            {recentPubs.map((p) => (
+              <li key={p.id}>
+                {p.link ? (
+                  <a
+                    href={p.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-words text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    {p.title}
+                  </a>
+                ) : (
+                  <p className="break-words text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {p.title}
+                  </p>
+                )}
+                <p className="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">
+                  {p.authors}
+                  {p.venue && ` · ${p.venue}`} · {p.year}
+                </p>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { db } from "@/lib/firebase";
+import { extractDoi, fetchDoiMeta } from "@/lib/doi";
 import { publicStrings } from "@/lib/publicStrings";
 import { Publication } from "@/types";
 
@@ -35,6 +36,38 @@ export default function PublicationsPage() {
   const [link, setLink] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const [doiInput, setDoiInput] = useState("");
+  const [doiFetching, setDoiFetching] = useState(false);
+  const [doiMessage, setDoiMessage] = useState<string | null>(null);
+
+  const importFromDoi = async () => {
+    if (doiFetching) return;
+    const doi = extractDoi(doiInput);
+    if (!doi) {
+      setDoiMessage("DOI를 찾지 못했습니다. 예: 10.1234/abcd 또는 doi.org 링크");
+      return;
+    }
+    setDoiFetching(true);
+    setDoiMessage(null);
+    try {
+      const meta = await fetchDoiMeta(doi);
+      if (!meta) {
+        setDoiMessage("DOI 정보를 가져오지 못했습니다. 직접 입력해주세요.");
+        return;
+      }
+      if (meta.title) setTitle(meta.title);
+      if (meta.authors) setAuthors(meta.authors);
+      if (meta.venue) setVenue(meta.venue);
+      if (meta.year) setYear(String(meta.year));
+      setLink(meta.link);
+      setDoiMessage("가져왔습니다. 내용을 확인하고 등록하세요.");
+    } catch {
+      setDoiMessage("DOI 정보를 가져오지 못했습니다. 직접 입력해주세요.");
+    } finally {
+      setDoiFetching(false);
+    }
+  };
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -148,6 +181,38 @@ export default function PublicationsPage() {
           onSubmit={handleCreate}
           className="mt-4 space-y-3 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900"
         >
+          <div className="rounded-md border border-blue-100 bg-blue-50/50 p-3 dark:border-blue-950 dark:bg-blue-950/20">
+            <label
+              htmlFor="pub-doi"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              DOI로 자동 입력
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="pub-doi"
+                type="text"
+                value={doiInput}
+                onChange={(e) => setDoiInput(e.target.value)}
+                disabled={doiFetching}
+                placeholder="10.1234/abcd 또는 https://doi.org/..."
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={importFromDoi}
+                disabled={doiFetching}
+                className="shrink-0 rounded-md border border-blue-600 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-950/40"
+              >
+                {doiFetching ? "가져오는 중..." : "가져오기"}
+              </button>
+            </div>
+            {doiMessage && (
+              <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
+                {doiMessage}
+              </p>
+            )}
+          </div>
           <div>
             <label
               htmlFor="pub-title"

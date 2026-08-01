@@ -21,6 +21,16 @@ import { formatDate, minToTime, timeToMin } from "@/lib/dates";
 const inputClass =
   "rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500";
 
+// 타임라인 표시 범위 (07:00 ~ 23:00)
+const DAY_START = 7 * 60;
+const DAY_END = 23 * 60;
+
+// "YYYY-MM-DD"에 일수를 더한다
+function addDaysToDateStr(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return formatDate(new Date(y, m - 1, d + days));
+}
+
 function BookingsContent() {
   const { user, profile } = useAuth();
   const [items, setItems] = useState<BookableItem[]>([]);
@@ -34,7 +44,10 @@ function BookingsContent() {
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [purpose, setPurpose] = useState("");
+  const [repeat, setRepeat] = useState<"none" | "weekly">("none");
+  const [repeatCount, setRepeatCount] = useState("4");
   const [formError, setFormError] = useState<string | null>(null);
+  const [formInfo, setFormInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -126,39 +139,70 @@ function BookingsContent() {
     }
     setSubmitting(true);
     setFormError(null);
+    setFormInfo(null);
+    // 중간 회차 실패 시에도 이미 등록된 내역을 안내할 수 있게 try 밖에 둔다
+    const created: string[] = [];
+    const skipped: string[] = [];
     try {
-      // 제출 직전 서버에서 같은 항목·날짜의 예약을 다시 조회해 겹침을 검사한다
-      // (날짜 변경 직후의 오래된 화면 상태나 거의 동시 제출로 인한 중복 방지)
-      const freshSnap = await getDocs(
-        query(
-          collection(db, "bookings"),
-          where("itemId", "==", selectedItem.id),
-          where("date", "==", date)
-        )
+      const count = repeat === "weekly" ? Number(repeatCount) : 1;
+      const dates = Array.from({ length: count }, (_, i) =>
+        addDaysToDateStr(date, 7 * i)
       );
-      const conflict = freshSnap.docs
-        .map((d) => d.data() as Omit<Booking, "id">)
-        .find((b) => startMin < b.endMin && endMin > b.startMin);
-      if (conflict) {
-        setFormError(
-          `기존 예약(${minToTime(conflict.startMin)}~${minToTime(conflict.endMin)}, ${conflict.createdByName})과 시간이 겹칩니다.`
+      for (const targetDate of dates) {
+        // 회차마다 제출 직전 서버에서 다시 조회해 겹침을 검사한다
+        // (오래된 화면 상태나 거의 동시 제출로 인한 중복 방지)
+        const freshSnap = await getDocs(
+          query(
+            collection(db, "bookings"),
+            where("itemId", "==", selectedItem.id),
+            where("date", "==", targetDate)
+          )
         );
+        const conflict = freshSnap.docs
+          .map((d) => d.data() as Omit<Booking, "id">)
+          .find((b) => startMin < b.endMin && endMin > b.startMin);
+        if (conflict) {
+          if (count === 1) {
+            setFormError(
+              `기존 예약(${minToTime(conflict.startMin)}~${minToTime(conflict.endMin)}, ${conflict.createdByName})과 시간이 겹칩니다.`
+            );
+            return;
+          }
+          skipped.push(targetDate);
+          continue;
+        }
+        await addDoc(collection(db, "bookings"), {
+          itemId: selectedItem.id,
+          itemName: selectedItem.name,
+          date: targetDate,
+          startMin,
+          endMin,
+          purpose: purpose.trim(),
+          createdBy: user.uid,
+          createdByName: profile.name,
+          createdAt: serverTimestamp(),
+        });
+        created.push(targetDate);
+      }
+      if (created.length === 0) {
+        setFormError("모든 회차가 기존 예약과 겹쳐 등록하지 못했습니다.");
         return;
       }
-      await addDoc(collection(db, "bookings"), {
-        itemId: selectedItem.id,
-        itemName: selectedItem.name,
-        date,
-        startMin,
-        endMin,
-        purpose: purpose.trim(),
-        createdBy: user.uid,
-        createdByName: profile.name,
-        createdAt: serverTimestamp(),
-      });
       setPurpose("");
+      if (count > 1) {
+        setFormInfo(
+          `${created.length}건 예약했습니다.` +
+            (skipped.length > 0
+              ? ` 겹친 ${skipped.length}건(${skipped.join(", ")})은 건너뛰었습니다.`
+              : "")
+        );
+      }
     } catch {
-      setFormError("예약에 실패했습니다. 잠시 후 다시 시도하세요.");
+      setFormError(
+        created.length > 0
+          ? `일부만 예약됐습니다 (${created.join(", ")}). 이후 회차 처리 중 오류가 발생했으니 남은 날짜만 다시 시도하세요.`
+          : "예약에 실패했습니다. 잠시 후 다시 시도하세요."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -272,6 +316,33 @@ function BookingsContent() {
             <h2 className="border-b border-gray-200 px-4 py-3 font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
               {selectedItem?.name} · {date}
             </h2>
+            {/* 하루 타임라인 (07:00~23:00) — 빈 시간대를 한눈에 */}
+            <div className="px-4 pt-3">
+              <div className="relative h-7 overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
+                {sortedBookings.map((b) => {
+                  const s = Math.max(b.startMin, DAY_START);
+                  const e = Math.min(b.endMin, DAY_END);
+                  if (e <= s) return null;
+                  const left = ((s - DAY_START) / (DAY_END - DAY_START)) * 100;
+                  const width = ((e - s) / (DAY_END - DAY_START)) * 100;
+                  return (
+                    <div
+                      key={b.id}
+                      style={{ left: `${left}%`, width: `${width}%` }}
+                      className="absolute top-0 h-full rounded-sm bg-blue-500/80"
+                      title={`${minToTime(b.startMin)}~${minToTime(b.endMin)} · ${b.createdByName}`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] text-gray-400 dark:text-gray-500">
+                <span>07:00</span>
+                <span>11:00</span>
+                <span>15:00</span>
+                <span>19:00</span>
+                <span>23:00</span>
+              </div>
+            </div>
             {sortedBookings.length === 0 ? (
               <p className="p-4 text-sm text-gray-500 dark:text-gray-400">
                 이 날짜에는 예약이 없습니다.
@@ -331,6 +402,33 @@ function BookingsContent() {
                   aria-label="용도"
                   className={`min-w-40 flex-1 ${inputClass} dark:bg-gray-900`}
                 />
+                <select
+                  value={repeat}
+                  onChange={(e) =>
+                    setRepeat(e.target.value as "none" | "weekly")
+                  }
+                  disabled={submitting}
+                  aria-label="반복"
+                  className={`${inputClass} dark:bg-gray-900`}
+                >
+                  <option value="none">반복 안 함</option>
+                  <option value="weekly">매주</option>
+                </select>
+                {repeat === "weekly" && (
+                  <select
+                    value={repeatCount}
+                    onChange={(e) => setRepeatCount(e.target.value)}
+                    disabled={submitting}
+                    aria-label="반복 횟수"
+                    className={`${inputClass} dark:bg-gray-900`}
+                  >
+                    {[2, 3, 4, 6, 8, 12].map((n) => (
+                      <option key={n} value={String(n)}>
+                        {n}주
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   type="submit"
                   disabled={submitting}
@@ -342,6 +440,11 @@ function BookingsContent() {
               {formError && (
                 <p className="text-sm text-red-600 dark:text-red-400">
                   {formError}
+                </p>
+              )}
+              {formInfo && (
+                <p className="text-sm text-green-700 dark:text-green-400">
+                  {formInfo}
                 </p>
               )}
             </form>
