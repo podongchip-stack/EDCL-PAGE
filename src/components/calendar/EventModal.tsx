@@ -21,6 +21,7 @@ import {
   eventCategoryStyle,
 } from "@/lib/eventCategories";
 import { formatDate, isSameDay, tsToDate } from "@/lib/dates";
+import { INPUT_CLASS } from "@/lib/formStyles";
 
 interface EventModalProps {
   event: LabEvent | null; // null이면 새 일정 등록
@@ -73,9 +74,6 @@ function renderRange(ev: LabEvent): string {
   if (!s || !e) return "";
   return isSameDay(s, e) ? formatDate(s) : `${formatDate(s)} ~ ${formatDate(e)}`;
 }
-
-const inputClass =
-  "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500";
 
 export default function EventModal({
   event,
@@ -336,7 +334,7 @@ export default function EventModal({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="일정 제목"
-                className={inputClass}
+                className={INPUT_CLASS}
               />
             </div>
 
@@ -351,7 +349,7 @@ export default function EventModal({
                 id="event-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as EventCategory)}
-                className={inputClass}
+                className={INPUT_CLASS}
               >
                 {EVENT_CATEGORY_ORDER.map((c) => (
                   <option key={c} value={c}>
@@ -374,7 +372,7 @@ export default function EventModal({
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 placeholder="일정 설명 (선택)"
-                className={inputClass}
+                className={INPUT_CLASS}
               />
             </div>
 
@@ -391,7 +389,7 @@ export default function EventModal({
                   type="date"
                   value={startInput}
                   onChange={(e) => setStartInput(e.target.value)}
-                  className={inputClass}
+                  className={INPUT_CLASS}
                 />
               </div>
               <div>
@@ -406,7 +404,7 @@ export default function EventModal({
                   type="date"
                   value={endInput}
                   onChange={(e) => setEndInput(e.target.value)}
-                  className={inputClass}
+                  className={INPUT_CLASS}
                 />
               </div>
             </div>
@@ -424,7 +422,7 @@ export default function EventModal({
                     id="event-repeat"
                     value={repeat}
                     onChange={(e) => setRepeat(e.target.value as RepeatOption)}
-                    className={inputClass}
+                    className={INPUT_CLASS}
                   >
                     {REPEAT_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -446,7 +444,7 @@ export default function EventModal({
                       type="date"
                       value={repeatUntilInput}
                       onChange={(e) => setRepeatUntilInput(e.target.value)}
-                      className={inputClass}
+                      className={INPUT_CLASS}
                     />
                   </div>
                 )}
