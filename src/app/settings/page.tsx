@@ -209,7 +209,8 @@ function SettingsContent() {
             화면 테마
           </h2>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            이 브라우저에만 적용되는 설정입니다.
+            이 브라우저의 로그인 후 화면에만 적용됩니다. 로그아웃 상태에서는
+            항상 어두운 화면으로 표시됩니다.
           </p>
         </div>
         <div className="space-y-2 p-5">
