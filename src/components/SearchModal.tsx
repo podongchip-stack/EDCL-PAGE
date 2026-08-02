@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Modal from "@/components/ui/Modal";
 import {
   LabEvent,
   MeetingNote,
@@ -86,14 +87,6 @@ export default function SearchModal({ onClose }: SearchModalProps) {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   const q = query.trim().toLowerCase();
 
@@ -205,14 +198,8 @@ export default function SearchModal({ onClose }: SearchModalProps) {
       : [];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[12vh]"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-lg rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal onClose={onClose} align="top" size="lg" bare>
+      <>
         <input
           type="text"
           value={query}
@@ -220,9 +207,9 @@ export default function SearchModal({ onClose }: SearchModalProps) {
           placeholder="일정, 프로젝트, 작업, 공지, 자료 검색..."
           aria-label="통합 검색"
           autoFocus
-          className="w-full rounded-t-lg border-b border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none dark:border-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+          className="w-full shrink-0 border-b border-gray-200 bg-transparent px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none dark:border-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
         />
-        <div className="max-h-[50vh] overflow-y-auto p-2">
+        <div className="overflow-y-auto p-2">
           {loadError ? (
             <p className="px-3 py-6 text-center text-sm text-red-600 dark:text-red-400">
               데이터를 불러오지 못했습니다. 닫고 다시 시도해주세요.
@@ -267,10 +254,10 @@ export default function SearchModal({ onClose }: SearchModalProps) {
             ))
           )}
         </div>
-        <p className="border-t border-gray-100 px-4 py-2 text-xs text-gray-400 dark:border-gray-800 dark:text-gray-500">
+        <p className="shrink-0 border-t border-gray-100 px-4 py-2 text-xs text-gray-400 dark:border-gray-800 dark:text-gray-500">
           Esc로 닫기 · Ctrl+K로 열기
         </p>
-      </div>
-    </div>
+      </>
+    </Modal>
   );
 }
