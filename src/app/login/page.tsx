@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FirebaseError } from "firebase/app";
@@ -75,12 +76,23 @@ export default function LoginPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mx-auto mt-8 w-full max-w-sm">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {t.loginTitle}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t.loginSubtitle}
-          </p>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.svg"
+              alt="EDCL LAB"
+              width={44}
+              height={44}
+              unoptimized
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {t.loginTitle}
+              </h1>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {t.loginSubtitle}
+              </p>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>

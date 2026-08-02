@@ -3,6 +3,56 @@
 /* html에 .dark 클래스가 있을 때만 dark: 변형이 적용되도록 한다 (설정탭에서 제어) */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* 공개 랜딩 표지의 배터리 연출 (Battery3D) */
+@theme {
+  --animate-battery-float: battery-float 7s ease-in-out infinite;
+  --animate-charge-shimmer: charge-shimmer 3.5s linear infinite;
+  --animate-charge-pulse: charge-pulse 2.4s ease-in-out infinite;
+  --animate-trace-flow: trace-flow 3.2s linear infinite;
+
+  @keyframes battery-float {
+    0%,
+    100% {
+      transform: rotateX(7deg) rotateY(-14deg) translateY(0);
+    }
+    50% {
+      transform: rotateX(4deg) rotateY(-7deg) translateY(-14px);
+    }
+  }
+  @keyframes charge-shimmer {
+    from {
+      background-position: 0% 50%;
+    }
+    to {
+      background-position: 200% 50%;
+    }
+  }
+  @keyframes charge-pulse {
+    0%,
+    100% {
+      opacity: 0.1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  /* pathLength=100 기준으로 짧은 밝은 조각이 트레이스를 따라 흐른다 */
+  @keyframes trace-flow {
+    to {
+      stroke-dashoffset: -100;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-battery-float,
+  .animate-charge-shimmer,
+  .animate-charge-pulse,
+  .animate-trace-flow {
+    animation: none;
+  }
+}
+
 :root {
   color-scheme: light;
 }

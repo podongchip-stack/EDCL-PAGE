@@ -18,10 +18,7 @@ const STRINGS = {
       recentNews: "소식",
       viewAllNews: "소식 전체 보기 →",
       joinUsTitle: "함께할 사람을 찾습니다",
-      pubsTitle: "논문",
-      pubsDesc: "연구 성과와 출판물",
-      loginTitle: "구성원 로그인",
-      loginDesc: "일정·프로젝트·자료 공유",
+      scrollHint: "아래로 스크롤",
     },
     members: {
       title: "구성원",
@@ -118,10 +115,7 @@ const STRINGS = {
       recentNews: "News",
       viewAllNews: "View all news →",
       joinUsTitle: "Join Us",
-      pubsTitle: "Publications",
-      pubsDesc: "Research outcomes",
-      loginTitle: "Member Login",
-      loginDesc: "Schedules, projects & resources",
+      scrollHint: "Scroll down",
     },
     members: {
       title: "Members",

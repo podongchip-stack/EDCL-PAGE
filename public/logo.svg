@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="soc" x1="32" y1="18" x2="32" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <!-- 배지 바탕 -->
+  <rect width="64" height="64" rx="14" fill="#020617"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5"/>
+  <!-- 배터리 단자 -->
+  <rect x="27" y="11" width="10" height="5" rx="1.5" fill="#475569"/>
+  <!-- 배터리 본체 -->
+  <rect x="21" y="16" width="22" height="36" rx="6" stroke="#67e8f9" stroke-opacity="0.85" stroke-width="2.5"/>
+  <!-- SOC 게이지: 맨 위 칸은 충전 중(흐리게), 아래 두 칸은 충전 완료 -->
+  <rect x="25.5" y="21" width="13" height="7.5" rx="2.5" fill="url(#soc)" opacity="0.35"/>
+  <rect x="25.5" y="30.5" width="13" height="7.5" rx="2.5" fill="url(#soc)"/>
+  <rect x="25.5" y="40" width="13" height="7.5" rx="2.5" fill="url(#soc)"/>
+  <!-- 좌우로 뻗는 회로 트레이스 + 비아 -->
+  <path d="M43 34 H49 L53 30 H55" stroke="#22d3ee" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="57.5" cy="30" r="2" stroke="#22d3ee" stroke-opacity="0.8" stroke-width="1.5" fill="#020617"/>
+  <path d="M21 26 H15 L11 30 H9" stroke="#22d3ee" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="6.5" cy="30" r="2" stroke="#22d3ee" stroke-opacity="0.8" stroke-width="1.5" fill="#020617"/>
+</svg>

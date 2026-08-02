@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { LabInfo, NewsItem, Publication } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { publicStrings } from "@/lib/publicStrings";
+import Battery3D from "@/components/Battery3D";
 
 function pubMillis(p: Publication): number {
   return p.createdAt ? p.createdAt.toMillis() : Number.MAX_SAFE_INTEGER;
@@ -75,173 +76,203 @@ export default function PublicHome() {
     .filter((v) => v.length > 0);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
-      <section className="text-center">
-        <h1 className="text-4xl font-bold text-blue-700 dark:text-blue-400">
-          EDCL LAB
-        </h1>
-        {!loaded ? (
-          <div className="mx-auto mt-6 max-w-2xl space-y-2">
-            <div className="h-4 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
-            <div className="mx-auto h-4 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
-          </div>
-        ) : (
-          <p className="mx-auto mt-6 max-w-2xl whitespace-pre-wrap break-words text-lg leading-relaxed text-gray-700 dark:text-gray-300">
-            {intro}
-          </p>
-        )}
-        {info?.professor && (
-          <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            {t.professor}: {info.professor}
-          </p>
-        )}
-        {info?.contact && (
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {t.contact}: {info.contact}
-          </p>
-        )}
-      </section>
+    <div>
+      {/* ===== 표지 (풀스크린 히어로) — 테마와 무관하게 어두운 커버로 고정 ===== */}
+      <section className="relative overflow-hidden bg-slate-950 text-white">
+        {/* 격자 + 발광 배경 */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.07)_1px,transparent_1px)] bg-[size:44px_44px]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-40 right-[-10%] h-[560px] w-[560px] rounded-full bg-cyan-500/15 blur-[120px]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute bottom-[-20%] left-[-10%] h-[480px] w-[480px] rounded-full bg-blue-600/15 blur-[120px]"
+        />
 
-      {loaded && (
-        <section className="mx-auto mt-12 max-w-3xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {t.researchTitle}
-          </h2>
-          {topics.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {topics.map((topic) => (
-                <span
-                  key={topic}
-                  className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
-                >
-                  {topic}
-                </span>
-              ))}
-            </div>
-          )}
-          <p className="mt-4 whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
-            {research}
-          </p>
-          {grants.length > 0 && (
-            <div className="mt-6 border-t border-gray-100 pt-4 dark:border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {t.grantsTitle}
-              </h3>
-              <ul className="mt-2 space-y-1.5">
-                {grants.map((g) => (
-                  <li
-                    key={g}
-                    className="flex gap-2 text-sm text-gray-600 dark:text-gray-400"
+        <div className="relative mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-6xl flex-col items-center justify-center gap-14 px-4 pb-24 pt-14 lg:flex-row lg:gap-6">
+          <div className="w-full max-w-xl text-center lg:flex-1 lg:text-left">
+            <p className="font-mono text-[11px] uppercase tracking-[0.4em] text-cyan-300/90 sm:text-xs">
+              Battery Management System
+            </p>
+            <h1 className="mt-5 text-5xl font-bold tracking-tight sm:text-7xl">
+              EDCL{" "}
+              <span className="bg-gradient-to-r from-cyan-300 to-emerald-300 bg-clip-text text-transparent">
+                LAB
+              </span>
+            </h1>
+            {!loaded ? (
+              <div className="mx-auto mt-6 max-w-xl space-y-2 lg:mx-0">
+                <div className="h-4 animate-pulse rounded bg-white/10" />
+                <div className="h-4 w-2/3 animate-pulse rounded bg-white/10 lg:mx-0" />
+              </div>
+            ) : (
+              <p className="mx-auto mt-6 max-w-xl whitespace-pre-wrap break-words text-base leading-relaxed text-slate-300 sm:text-lg lg:mx-0">
+                {intro}
+              </p>
+            )}
+            {topics.length > 0 && (
+              <div className="mt-7 flex flex-wrap justify-center gap-2 lg:justify-start">
+                {topics.map((topic) => (
+                  <span
+                    key={topic}
+                    className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200 sm:text-sm"
                   >
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
-                    <span className="break-words">{g}</span>
-                  </li>
+                    {topic}
+                  </span>
                 ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      )}
-
-      {recentNews.length > 0 && (
-        <section className="mx-auto mt-8 max-w-3xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {t.recentNews}
-            </h2>
-            <Link
-              href="/news"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              {t.viewAllNews}
-            </Link>
-          </div>
-          <ul className="mt-4 space-y-3">
-            {recentNews.map((n) => (
-              <li key={n.id} className="flex gap-3">
-                <span className="w-24 shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                  {n.date}
-                </span>
-                <span className="min-w-0 break-words text-sm text-gray-800 dark:text-gray-200">
-                  {n.title}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {recentPubs.length > 0 && (
-        <section className="mx-auto mt-8 max-w-3xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {t.recentPubs}
-            </h2>
-            <Link
-              href="/publications"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              {t.viewAllPubs}
-            </Link>
-          </div>
-          <ul className="mt-4 space-y-3">
-            {recentPubs.map((p) => (
-              <li key={p.id}>
-                {p.link ? (
-                  <a
-                    href={p.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-words text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-                  >
-                    {p.title}
-                  </a>
-                ) : (
-                  <p className="break-words text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {p.title}
-                  </p>
+              </div>
+            )}
+            {(info?.professor || info?.contact) && (
+              <p className="mt-8 text-sm text-slate-400">
+                {info?.professor && `${t.professor} ${info.professor}`}
+                {info?.professor && info?.contact && (
+                  <span className="mx-2 text-slate-600">|</span>
                 )}
-                <p className="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">
-                  {p.authors}
-                  {p.venue && ` · ${p.venue}`} · {p.year}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                {info?.contact && `${t.contact} ${info.contact}`}
+              </p>
+            )}
+          </div>
+          <div className="w-full lg:flex-1">
+            <Battery3D />
+          </div>
+        </div>
 
-      {joinUs && (
-        <section className="mx-auto mt-8 max-w-3xl rounded-lg border border-blue-200 bg-blue-50/50 p-8 dark:border-blue-900 dark:bg-blue-950/20">
-          <h2 className="text-xl font-bold text-blue-800 dark:text-blue-300">
-            {t.joinUsTitle}
-          </h2>
-          <p className="mt-3 whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
-            {joinUs}
-          </p>
-        </section>
-      )}
-
-      <section className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
-        <Link
-          href="/publications"
-          className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-800 dark:hover:bg-blue-950/30"
+        {/* 스크롤 힌트 */}
+        <a
+          href="#about"
+          className="absolute bottom-5 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-slate-400 transition-colors hover:text-cyan-300"
         >
-          <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            {t.pubsTitle}
-          </p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t.pubsDesc}
-          </p>
-        </Link>
-        <Link
-          href="/login"
-          className="rounded-lg border border-blue-600 bg-blue-600 p-6 text-center shadow-sm transition-colors hover:bg-blue-700"
-        >
-          <p className="text-base font-semibold text-white">{t.loginTitle}</p>
-          <p className="mt-1 text-sm text-blue-100">{t.loginDesc}</p>
-        </Link>
+          <span className="text-[11px] tracking-widest">{t.scrollHint}</span>
+          <svg
+            className="h-4 w-4 animate-bounce"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 8l5 5 5-5" />
+          </svg>
+        </a>
       </section>
+
+      {/* ===== 본문 (스크롤 시 노출) ===== */}
+      <div className="mx-auto max-w-5xl px-4 py-16">
+        {loaded && (
+          <section id="about" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {t.researchTitle}
+            </h2>
+            <p className="mt-5 max-w-3xl whitespace-pre-wrap break-words text-base leading-relaxed text-gray-700 dark:text-gray-300">
+              {research}
+            </p>
+            {grants.length > 0 && (
+              <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  {t.grantsTitle}
+                </h3>
+                <ul className="mt-3 space-y-1.5">
+                  {grants.map((g) => (
+                    <li
+                      key={g}
+                      className="flex gap-2 text-sm text-gray-600 dark:text-gray-400"
+                    >
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+                      <span className="break-words">{g}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+
+        {(recentNews.length > 0 || recentPubs.length > 0) && (
+          <section className="mt-16 grid gap-12 md:grid-cols-2">
+            {recentNews.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3 dark:border-gray-800">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {t.recentNews}
+                  </h2>
+                  <Link
+                    href="/news"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    {t.viewAllNews}
+                  </Link>
+                </div>
+                <ul className="mt-4 space-y-3">
+                  {recentNews.map((n) => (
+                    <li key={n.id} className="flex gap-3">
+                      <span className="w-24 shrink-0 text-xs leading-5 text-gray-400 dark:text-gray-500">
+                        {n.date}
+                      </span>
+                      <span className="min-w-0 break-words text-sm text-gray-800 dark:text-gray-200">
+                        {n.title}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {recentPubs.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3 dark:border-gray-800">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {t.recentPubs}
+                  </h2>
+                  <Link
+                    href="/publications"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    {t.viewAllPubs}
+                  </Link>
+                </div>
+                <ul className="mt-4 space-y-3">
+                  {recentPubs.map((p) => (
+                    <li key={p.id}>
+                      {p.link ? (
+                        <a
+                          href={p.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="break-words text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          {p.title}
+                        </a>
+                      ) : (
+                        <p className="break-words text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {p.title}
+                        </p>
+                      )}
+                      <p className="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">
+                        {p.authors}
+                        {p.venue && ` · ${p.venue}`} · {p.year}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+
+        {joinUs && (
+          <section className="mt-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 p-8 text-white sm:p-10 dark:from-blue-700 dark:to-cyan-600">
+            <h2 className="text-2xl font-bold">{t.joinUsTitle}</h2>
+            <p className="mt-3 whitespace-pre-wrap break-words text-base leading-relaxed text-blue-50">
+              {joinUs}
+            </p>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

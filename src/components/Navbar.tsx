@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,11 +12,7 @@ const MEMBER_LINKS = [
   { href: "/", label: "대시보드" },
   { href: "/calendar", label: "일정표" },
   { href: "/projects", label: "프로젝트" },
-  { href: "/notes", label: "회의록" },
-  { href: "/journal-club", label: "저널클럽" },
   { href: "/resources", label: "자료실" },
-  { href: "/bookings", label: "예약" },
-  { href: "/publications", label: "논문" },
   { href: "/news", label: "소식" },
 ];
 
@@ -27,13 +24,6 @@ export default function Navbar() {
   const [showSearch, setShowSearch] = useState(false);
 
   const approved = profile?.status === "approved";
-
-  // 로그인하지 않은 방문자(또는 승인 대기)에게 보이는 공개 페이지 링크
-  const publicLinks = [
-    { href: "/news", label: lang === "en" ? "News" : "소식" },
-    { href: "/members", label: lang === "en" ? "Members" : "구성원" },
-    { href: "/publications", label: lang === "en" ? "Publications" : "논문" },
-  ];
 
   // Ctrl+K / Cmd+K로 통합 검색 열기 (승인된 구성원만)
   useEffect(() => {
@@ -60,25 +50,22 @@ export default function Navbar() {
         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
     }`;
 
-  const links = approved ? MEMBER_LINKS : publicLinks;
-
+  // 내비 탭은 승인된 구성원에게만 보인다 (로그인 전 방문자는 로고·언어 전환·로그인 버튼만)
   const navLinks = (
     <>
-      {links.map((link) => (
+      {MEMBER_LINKS.map((link) => (
         <Link key={link.href} href={link.href} className={linkClass(link.href)}>
           {link.label}
         </Link>
       ))}
-      {approved && profile?.role === "admin" && (
+      {profile?.role === "admin" && (
         <Link href="/admin" className={linkClass("/admin")}>
           관리자
         </Link>
       )}
-      {approved && (
-        <Link href="/settings" className={linkClass("/settings")}>
-          설정
-        </Link>
-      )}
+      <Link href="/settings" className={linkClass("/settings")}>
+        설정
+      </Link>
     </>
   );
 
@@ -89,11 +76,22 @@ export default function Navbar() {
           <div className="flex min-w-0 items-center gap-6">
             <Link
               href="/"
-              className="shrink-0 text-lg font-bold text-blue-700 dark:text-blue-400"
+              className="flex shrink-0 items-center gap-2 text-lg font-bold text-blue-700 dark:text-blue-400"
             >
+              {/* SVG 로고는 최적화가 필요 없어 unoptimized로 그대로 서빙한다 */}
+              <Image
+                src="/logo.svg"
+                alt=""
+                width={28}
+                height={28}
+                unoptimized
+                priority
+              />
               EDCL LAB
             </Link>
-            <nav className="hidden items-center gap-1 lg:flex">{navLinks}</nav>
+            {approved && (
+              <nav className="hidden items-center gap-1 lg:flex">{navLinks}</nav>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {!approved && (
@@ -151,9 +149,11 @@ export default function Navbar() {
           </div>
         </div>
         {/* 좁은 화면에서는 탭을 둘째 줄에 배치해 잘림 없이 접근 가능하게 한다 */}
-        <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-2 lg:hidden">
-          {navLinks}
-        </nav>
+        {approved && (
+          <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-2 lg:hidden">
+            {navLinks}
+          </nav>
+        )}
       </div>
       {showSearch && <SearchModal onClose={() => setShowSearch(false)} />}
     </header>
